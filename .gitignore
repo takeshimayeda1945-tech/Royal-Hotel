@@ -1,0 +1,15 @@
+# Build output (dotnet build / dotnet watch recreate it)
+bin/
+obj/
+
+# Local SQLite database: it holds real accounts. The app creates a new one, with the demo
+# accounts and sample rooms, when the file is missing ("DatabaseProvider": "Sqlite").
+*.db
+*.db-shm
+*.db-wal
+
+# Visual Studio / Rider user files
+.vs/
+.idea/
+*.user
+*.suo

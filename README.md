@@ -57,7 +57,8 @@
 
 ค่าการเชื่อมต่ออยู่ใน `appsettings.json` → `ConnectionStrings:MySql`
 ถ้าเชื่อม MySQL ไม่ได้ ระบบจะเขียนสาเหตุและวิธีแก้ไว้ใน log ตอนเริ่มทำงาน
-ต้องการใช้ไฟล์ SQLite เดิม (`cyber_users.db`) แทน MySQL ให้ตั้ง `"DatabaseProvider": "Sqlite"`
+ต้องการใช้ไฟล์ SQLite (`cyber_users.db`) แทน MySQL ให้ตั้ง `"DatabaseProvider": "Sqlite"`
+(ไฟล์นี้ไม่อยู่ใน git — ถ้ายังไม่มี ระบบจะสร้างใหม่ให้เอง พร้อมบัญชีทดลองและห้องพักตัวอย่าง)
 
 ### บัญชีทดลอง
 
