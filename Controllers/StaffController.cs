@@ -437,6 +437,9 @@ public class StaffController : AppControllerBase
             return denied;
         }
 
+        // Locked like ConfirmPayment: a confirm and a reject of the same transfer cannot both win.
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        await LockBookingAsync(id);
         var booking = await _context.HotelBookings.FindAsync(id);
         if (booking == null || !booking.CanCheckTransfer)
         {
@@ -449,6 +452,7 @@ public class StaffController : AppControllerBase
             booking.PaymentStatus = PaymentStatus.Unpaid;
             booking.PaymentReference = string.Empty;
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["SuccessMessage"] = $"ปฏิเสธการแจ้งโอนของการจอง #{id} แล้ว — ลูกค้าต้องชำระใหม่";
         }
 
@@ -466,6 +470,9 @@ public class StaffController : AppControllerBase
             return denied;
         }
 
+        // Locked while it is checked and saved: the guest may be cancelling it online at this moment.
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        await LockBookingAsync(id);
         var booking = await _context.HotelBookings.FindAsync(id);
         if (booking == null)
         {
@@ -497,6 +504,7 @@ public class StaffController : AppControllerBase
             booking.CheckedInAt = DateTime.Now;
             Audit(AuditActions.CheckIn, AuditEntities.Booking, booking.Id, AuditText.Booking(booking));
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["SuccessMessage"] = $"เช็คอิน {booking.GuestName} เข้าห้อง {booking.RoomName} แล้ว";
         }
 
@@ -562,6 +570,10 @@ public class StaffController : AppControllerBase
             return denied;
         }
 
+        // Locked while it is checked and saved: a payment saved at the same moment (cash at the desk,
+        // the guest's card) either comes first and is then refunded below, or waits for the cancel.
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        await LockBookingAsync(id);
         var booking = await _context.HotelBookings.FindAsync(id);
         if (booking == null || booking.Status != BookingStatus.Confirmed)
         {
@@ -575,6 +587,7 @@ public class StaffController : AppControllerBase
             Audit(AuditActions.NoShowClosed, AuditEntities.Booking, booking.Id,
                 $"{AuditText.Booking(booking)} · ไม่คืนเงิน ({PaymentStatus.ThaiName(booking.PaymentStatus)})");
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["SuccessMessage"] = booking.PaymentStatus switch
             {
                 PaymentStatus.Paid => $"ปิดรายการไม่มาเข้าพัก #{id} แล้ว — ไม่คืนเงิน (ยอด {DisplayText.Money(booking.Total)} เป็นรายได้ของโรงแรม)",
@@ -588,6 +601,7 @@ public class StaffController : AppControllerBase
             Audit(AuditActions.StaffCancel, AuditEntities.Booking, booking.Id,
                 AuditText.Booking(booking) + (needsRefund ? " · ส่งเรื่องคืนเงินให้ฝ่ายการเงิน" : ""));
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["SuccessMessage"] = needsRefund
                 ? $"ยกเลิกการจอง #{id} แล้ว — ส่งเรื่องคืนเงินให้ฝ่ายการเงิน"
                 : $"ยกเลิกการจอง #{id} แล้ว";

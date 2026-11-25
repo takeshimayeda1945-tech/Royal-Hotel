@@ -778,6 +778,11 @@ public class HomeController : AppControllerBase
             return RedirectToLogin(Url.Action(nameof(BookingHistory)));
         }
 
+        // Locked while it is checked and saved (same as the payment page): a card payment made in
+        // another tab at the same moment either finishes first, and is then refunded below, or waits.
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        await LockBookingAsync(id);
+
         // Users can only cancel their own bookings.
         var booking = await FindOwnBookingAsync(id, userId);
         if (booking == null)
@@ -798,6 +803,7 @@ public class HomeController : AppControllerBase
             Audit(AuditActions.GuestCancel, AuditEntities.Booking, booking.Id,
                 AuditText.Booking(booking) + (needsRefund ? " · ส่งเรื่องคืนเงินให้ฝ่ายการเงิน" : ""));
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["SuccessMessage"] = needsRefund
                 ? $"ยกเลิกการจอง #{booking.Id} เรียบร้อยแล้ว — ฝ่ายการเงินจะคืนเงินให้ภายหลัง"
                 : $"ยกเลิกการจอง #{booking.Id} เรียบร้อยแล้ว";

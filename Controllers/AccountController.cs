@@ -48,7 +48,15 @@ public class AccountController : AppControllerBase
 
         user.Name = model.Name;
         user.PhoneNumber = model.PhoneNumber;
+
+        // Duty shifts keep a copy of the name for the duty table (as in SuperAdmin/UpdateUser):
+        // the user row and the copies change together, or not at all.
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         await _context.SaveChangesAsync();
+        await _context.HousekeepingShifts
+            .Where(s => s.UserId == user.Id && s.UserName != user.Name)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserName, user.Name));
+        await transaction.CommitAsync();
 
         // The header shows the name from the session.
         SetSessionUser(user);
