@@ -8,6 +8,9 @@ obj/
 *.db-shm
 *.db-wal
 
+# Settings of this computer only (the real database password); overrides appsettings.json
+appsettings.Local.json
+
 # Visual Studio / Rider user files
 .vs/
 .idea/

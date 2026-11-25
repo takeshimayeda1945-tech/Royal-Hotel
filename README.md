@@ -55,7 +55,11 @@
 - โค้ด: `Infrastructure/RolePortals.cs` (พอร์ตตายตัว), `Infrastructure/LoginHandoff.cs` (ตั๋วย้ายพอร์ต), `Infrastructure/RolePortalFilter.cs` (ตรวจบทบาทกับพอร์ต),
   `Controllers/HomeController.cs` (Login / Handoff), `Models/RolePortal.cs` + `Data/DbInitializer.cs` (ตารางและการคืนค่า), `Program.cs` (เปิดพอร์ต + session แยกพอร์ต)
 
-ค่าการเชื่อมต่ออยู่ใน `appsettings.json` → `ConnectionStrings:MySql`
+ค่าการเชื่อมต่ออยู่ใน `appsettings.json` → `ConnectionStrings:MySql` (รหัสผ่าน `RoyalHotel_Dev_2026` เป็นค่าเริ่มต้นสำหรับพัฒนา ตรงกับ `01_create_database.sql`)
+ถ้าใช้รหัสผ่านของตัวเอง ให้ใส่ในไฟล์ `appsettings.Local.json` ข้างๆ `appsettings.json` — ไฟล์นี้ไม่อยู่ใน git และค่าในไฟล์นี้ใช้แทนค่าใน `appsettings.json`:
+```json
+{ "ConnectionStrings": { "MySql": "Server=localhost;Port=3306;Database=royalhotel;User=royalhotel_app;Password=<รหัสผ่าน>;CharSet=utf8mb4" } }
+```
 ถ้าเชื่อม MySQL ไม่ได้ ระบบจะเขียนสาเหตุและวิธีแก้ไว้ใน log ตอนเริ่มทำงาน
 ต้องการใช้ไฟล์ SQLite (`cyber_users.db`) แทน MySQL ให้ตั้ง `"DatabaseProvider": "Sqlite"`
 (ไฟล์นี้ไม่อยู่ใน git — ถ้ายังไม่มี ระบบจะสร้างใหม่ให้เอง พร้อมบัญชีทดลองและห้องพักตัวอย่าง)

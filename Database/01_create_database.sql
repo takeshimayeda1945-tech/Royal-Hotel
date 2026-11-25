@@ -12,8 +12,10 @@ CREATE DATABASE IF NOT EXISTS royalhotel
     COLLATE utf8mb4_0900_ai_ci;
 
 -- The web site connects with this account, never with root.
--- The password must match ConnectionStrings:MySql in appsettings.json.
-CREATE USER IF NOT EXISTS 'royalhotel_app'@'localhost' IDENTIFIED BY 'Rh_w6qZaFpfViZc8uaNB6H9';
+-- The password must match ConnectionStrings:MySql. RoyalHotel_Dev_2026 is the development default that
+-- appsettings.json uses (the account only accepts connections from this computer). For your own password,
+-- change it here and put the connection string in appsettings.Local.json (not in git), as README.md shows.
+CREATE USER IF NOT EXISTS 'royalhotel_app'@'localhost' IDENTIFIED BY 'RoyalHotel_Dev_2026';
 GRANT ALL PRIVILEGES ON royalhotel.* TO 'royalhotel_app'@'localhost';
 FLUSH PRIVILEGES;
 

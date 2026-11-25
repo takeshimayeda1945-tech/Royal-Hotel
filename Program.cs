@@ -14,6 +14,14 @@ CultureInfo.DefaultThreadCurrentCulture = appCulture;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// The real database password of this computer lives in appsettings.Local.json, which is not in git
+// (.gitignore); it overrides appsettings.json. Environment variables and command-line options are
+// added again after it, so they still win (test runs point the site at another database with them).
+builder.Configuration
+    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables()
+    .AddCommandLine(args);
+
 // Every role has its own fixed port (Infrastructure/RolePortals.cs); logging in on any port moves
 // the user to the port of their role (Infrastructure/LoginHandoff.cs).
 var portals = RolePortals.Fixed;
@@ -94,7 +102,8 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var hint = useMySql
-            ? "Check that the MySQL service (MySQL267) is running and that ConnectionStrings:MySql in appsettings.json is correct " +
+            ? "Check that the MySQL service (MySQL267) is running and that ConnectionStrings:MySql is correct " +
+              "(appsettings.Local.json, or appsettings.json when there is no such file) " +
               "(run Database/01_create_database.sql once as root). To use the old SQLite file instead, set \"DatabaseProvider\": \"Sqlite\"."
             : "Check ConnectionStrings:DefaultConnection in appsettings.json.";
         logger.LogCritical(ex, "Cannot open the database. {Hint}", hint);
