@@ -1,0 +1,155 @@
+@{
+    ViewData["Title"] = "ฝ่ายการเงิน";
+    var byMethod = ViewBag.ByMethod as List<(string Method, int Count, decimal Amount)> ?? new();
+    var pending = ViewBag.PendingTransfers as List<HotelBooking> ?? new();
+    var refunds = ViewBag.Refunds as List<HotelBooking> ?? new();
+    var recent = ViewBag.RecentPayments as List<HotelBooking> ?? new();
+    var returnUrl = Context.Request.Path.ToString();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title mb-1">Finance</div>
+        <h2 class="cyber-heading mb-0">ฝ่ายการเงิน · รับชำระ ตรวจสอบ คืนเงิน</h2>
+    </div>
+    <a class="cyber-btn-outline" asp-action="ExportCsv">ดาวน์โหลดรายการทั้งหมด (CSV)</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xxl-3"><div class="stat-tile"><span>รับชำระแล้วทั้งหมด</span><strong>@DisplayText.MoneyWhole((decimal)ViewBag.ReceivedTotal)</strong><small>คืนเงินไปแล้ว @DisplayText.MoneyWhole((decimal)ViewBag.RefundedTotal)</small></div></div>
+    <div class="col-sm-6 col-xxl-3"><div class="stat-tile"><span>รับชำระเดือนนี้</span><strong>@DisplayText.MoneyWhole((decimal)ViewBag.ReceivedThisMonth)</strong></div></div>
+    <div class="col-sm-6 col-xxl-3"><div class="stat-tile"><span>ภาษีขาย 7% ที่เก็บได้</span><strong>@DisplayText.MoneyWhole((decimal)ViewBag.TaxTotal)</strong></div></div>
+    <div class="col-sm-6 col-xxl-3"><div class="stat-tile"><span>ยอดที่ยังต้องเก็บ</span><strong>@DisplayText.MoneyWhole((decimal)ViewBag.UnpaidTotal)</strong><small>การจองที่ยังไม่สิ้นสุดและยังไม่ชำระ</small></div></div>
+</div>
+
+@* The two work lists (transfers to check, refunds to pay) use the full width, so their buttons are
+   always visible without scrolling the table sideways. The summaries come after them. *@
+<div class="row g-4">
+    <div class="col-12">
+        <div class="cyber-section-title">การโอนที่รอตรวจสอบ (@pending.Count)</div>
+        @if (!pending.Any())
+        {
+            <div class="cyber-empty">ไม่มีรายการรอตรวจสอบ</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-dark align-middle cyber-table">
+                    <thead><tr><th>เลขที่</th><th>ผู้จอง</th><th>เลขอ้างอิง</th><th>แจ้งเมื่อ</th><th class="text-end">ยอด</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var b in pending)
+                        {
+                            <tr>
+                                <td>#@b.Id</td>
+                                <td>@b.GuestName<div class="cyber-note mt-0">@b.RoomName · เข้าพัก @DisplayText.Date(b.CheckIn)</div></td>
+                                <td class="wrap-anywhere">@b.PaymentReference</td>
+                                <td class="text-nowrap">@DisplayText.Timestamp(b.CreatedAt)</td>
+                                <td class="text-end">@DisplayText.Money(b.Total)</td>
+                                <td class="text-end text-nowrap">
+                                    <form asp-controller="Staff" asp-action="ConfirmPayment" method="post" class="d-inline"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-success btn-sm">ยืนยัน</button></form>
+                                    <form asp-controller="Staff" asp-action="RejectPayment" method="post" class="d-inline" data-confirm="ปฏิเสธการแจ้งโอนของการจอง #@b.Id ?"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-warning btn-sm">ไม่พบยอด</button></form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="col-12">
+        <div class="cyber-section-title">รอคืนเงิน (การจองที่ถูกยกเลิก) (@refunds.Count)</div>
+        @if (!refunds.Any())
+        {
+            <div class="cyber-empty">ไม่มีรายการรอคืนเงิน</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-dark align-middle cyber-table">
+                    <thead><tr><th>เลขที่</th><th>ผู้จอง</th><th>ชำระโดย</th><th class="text-end">ยอดคืน</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var b in refunds)
+                        {
+                            var moneyConfirmed = b.PaidAt != null;
+                            <tr>
+                                <td>
+                                    #@b.Id
+                                    @if (b.CancelReason.Length > 0)
+                                    {
+                                        <div class="cyber-note mt-0">@CancelReasons.ThaiName(b.CancelReason)</div>
+                                    }
+                                </td>
+                                <td>@b.GuestName<div class="cyber-note mt-0">@b.ContactEmail</div></td>
+                                <td>
+                                    @b.PaymentMethod
+                                    <div class="cyber-note mt-0">@b.PaymentReference</div>
+                                    @if (!moneyConfirmed)
+                                    {
+                                        <div class="cyber-note mt-0 text-warning">ยอดโอนยังไม่เคยได้รับการยืนยัน — ตรวจสอบก่อนคืนเงิน</div>
+                                    }
+                                </td>
+                                <td class="text-end">@DisplayText.Money(b.Total)</td>
+                                <td class="text-end">
+                                    <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                        <form asp-action="MarkRefunded" method="post" data-confirm="ยืนยันว่าคืนเงิน @DisplayText.Money(b.Total) ให้การจอง #@b.Id แล้ว ?"><input type="hidden" name="id" value="@b.Id" /><button type="submit" class="btn btn-outline-info btn-sm">คืนเงินแล้ว</button></form>
+                                        @if (!moneyConfirmed)
+                                        {
+                                            <form asp-action="CloseRefund" method="post" data-confirm="ไม่พบยอดโอนของการจอง #@b.Id — ปิดรายการโดยไม่คืนเงิน ?"><input type="hidden" name="id" value="@b.Id" /><button type="submit" class="btn btn-outline-warning btn-sm">ไม่พบยอดโอน</button></form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-5">
+        <div class="cyber-section-title">ยอดรับชำระแยกตามวิธีชำระเงิน</div>
+        @if (!byMethod.Any())
+        {
+            <div class="cyber-empty">ยังไม่มีการชำระเงิน</div>
+        }
+        else
+        {
+            <table class="table table-dark align-middle cyber-table">
+                <thead><tr><th>วิธีชำระ</th><th class="text-end">รายการ</th><th class="text-end">ยอดรวม</th></tr></thead>
+                <tbody>
+                    @foreach (var row in byMethod)
+                    {
+                        <tr><td>@row.Method</td><td class="text-end">@row.Count</td><td class="text-end">@DisplayText.Money(row.Amount)</td></tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+    </div>
+
+    <div class="col-lg-7">
+        <div class="cyber-section-title">รับชำระล่าสุด</div>
+        @if (!recent.Any())
+        {
+            <div class="cyber-empty">ยังไม่มีการชำระเงิน</div>
+        }
+        else
+        {
+            <table class="table table-dark align-middle cyber-table">
+                <thead><tr><th>เลขที่</th><th>ผู้จอง</th><th>วันที่รับ</th><th class="text-end">ยอด</th></tr></thead>
+                <tbody>
+                    @foreach (var b in recent)
+                    {
+                        <tr>
+                            <td><a asp-controller="Staff" asp-action="Receipt" asp-route-id="@b.Id" asp-route-returnUrl="@returnUrl" title="ดูใบเสร็จ">#@b.Id</a><div class="cyber-note mt-0">@b.PaymentMethod</div></td>
+                            <td class="wrap-anywhere">@b.GuestName</td>
+                            <td class="text-nowrap">@DisplayText.Timestamp(b.PaidAt ?? b.CreatedAt)</td>
+                            <td class="text-end">@DisplayText.Money(b.Total)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

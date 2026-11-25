@@ -1,0 +1,210 @@
+@model WalkInBookingModel
+@{
+    ViewData["Title"] = "จองให้แขก walk-in";
+    var rooms = ViewBag.Rooms as List<HotelRoom> ?? new();
+    var taken = ViewBag.TakenRoomIds as HashSet<int> ?? new();
+    var beingCleaned = ViewBag.RoomsBeingCleaned as HashSet<int> ?? new();
+    var quote = ViewBag.Quote as WalkInQuoteModel ?? new();
+    var today = DateInput.ToValue(DateTime.Today);
+    var stayStartsToday = Model.CheckIn == today;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title mb-1">Front Desk · Walk-in</div>
+        <h2 class="cyber-heading mb-0">จองห้องให้แขกที่เคาน์เตอร์</h2>
+    </div>
+    <a class="cyber-btn-outline" asp-action="Bookings">&larr; กลับไปจัดการการจอง</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <form id="walkin-form" asp-action="WalkIn" method="post" data-quote-url="@Url.Action("WalkInQuote")"
+              data-today="@today" data-rooms-being-cleaned="@string.Join(",", beingCleaned)">
+            <div asp-validation-summary="ModelOnly" class="cyber-validation-summary"></div>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label asp-for="RoomId" class="form-label">ห้องพัก</label>
+                    <select asp-for="RoomId" class="form-select" required>
+                        <option value="">เลือกห้อง</option>
+                        @foreach (var room in rooms)
+                        {
+                            <option value="@room.Id" selected="@(room.Id == Model.RoomId)">@room.Name · @room.RoomType · @DisplayText.Money(room.Price)/คืน · @room.Capacity คน@(taken.Contains(room.Id) ? " (ไม่ว่างวันที่เลือก)" : "")@(stayStartsToday && beingCleaned.Contains(room.Id) ? " (รอทำความสะอาด)" : "")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="RoomId" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CheckIn" class="form-label">Check-in</label>
+                    <input asp-for="CheckIn" type="date" class="form-control" min="@DateInput.ToValue(DateTime.Today)" data-role="check-in" required />
+                    <span asp-validation-for="CheckIn" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CheckOut" class="form-label">Check-out</label>
+                    <input asp-for="CheckOut" type="date" class="form-control" min="@DateInput.ToValue(DateTime.Today.AddDays(1))" data-role="check-out" data-max-nights="@BookingOptions.MaxNights" required />
+                    <span asp-validation-for="CheckOut" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="GuestName" class="form-label">ชื่อผู้เข้าพัก</label>
+                    <input asp-for="GuestName" class="form-control" maxlength="100" autocomplete="off" required />
+                    <span asp-validation-for="GuestName" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ContactEmail" class="form-label">อีเมล (ไม่บังคับ)</label>
+                    <input asp-for="ContactEmail" type="email" class="form-control" maxlength="200" autocomplete="off" />
+                    <div class="form-text">ถ้าเป็นอีเมลของสมาชิก การจองจะขึ้นในประวัติของสมาชิกและได้ส่วนลดสมาชิก</div>
+                    <span asp-validation-for="ContactEmail" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Guests" class="form-label">จำนวนผู้เข้าพัก</label>
+                    <input asp-for="Guests" type="number" min="1" max="@BookingOptions.MaxGuests" class="form-control" required />
+                    <span asp-validation-for="Guests" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="BedType" class="form-label">ประเภทเตียง</label>
+                    <select asp-for="BedType" asp-items="@(new SelectList(BookingOptions.BedTypes))" class="form-select"></select>
+                    <span asp-validation-for="BedType" class="field-error"></span>
+                </div>
+            </div>
+
+            <fieldset class="cyber-booking-box mt-4">
+                <legend class="cyber-section-title mb-2">บริการเสริม</legend>
+                <div class="form-check">
+                    <input asp-for="Breakfast" class="form-check-input" />
+                    <label asp-for="Breakfast" class="form-check-label">อาหารเช้า (@DisplayText.Money(BookingOptions.BreakfastPerPersonPerNight) ต่อคนต่อคืน)</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="ExtraBed" class="form-check-input" />
+                    <label asp-for="ExtraBed" class="form-check-label">เตียงเสริม (@DisplayText.Money(BookingOptions.ExtraBedPerNight) ต่อคืน)</label>
+                </div>
+                <div class="row g-2 align-items-center mt-1">
+                    <div class="col-auto">
+                        <label asp-for="SpaSessions" class="form-label mb-0">สปา (@DisplayText.Money(BookingOptions.SpaPerSession) ต่อครั้ง)</label>
+                    </div>
+                    <div class="col-auto">
+                        <input asp-for="SpaSessions" type="number" min="0" max="@BookingOptions.MaxSpaSessions" class="form-control form-control-sm" style="width: 6rem;" />
+                    </div>
+                    <div class="col-auto"><span class="cyber-note mt-0">ครั้ง (เฉพาะห้องที่มีบริการสปา)</span></div>
+                </div>
+                <span asp-validation-for="SpaSessions" class="field-error"></span>
+            </fieldset>
+
+            <div class="mt-3">
+                <label asp-for="SpecialRequest" class="form-label">คำขอพิเศษของแขก (ไม่บังคับ)</label>
+                <textarea asp-for="SpecialRequest" class="form-control" rows="2" maxlength="@BookingOptions.MaxSpecialRequestLength"
+                          placeholder="เช่น ขอห้องเงียบ · ขอหมอนเพิ่ม · แพ้อาหารทะเล"></textarea>
+                <span asp-validation-for="SpecialRequest" class="field-error"></span>
+            </div>
+
+            <fieldset class="cyber-booking-box mt-3">
+                <legend class="cyber-section-title mb-2">การชำระเงินที่เคาน์เตอร์</legend>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="PaymentMethod" class="form-label">วิธีชำระเงิน</label>
+                        <select asp-for="PaymentMethod" asp-items="@(new SelectList(BookingOptions.PaymentMethods))" class="form-select"></select>
+                        <span asp-validation-for="PaymentMethod" class="field-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PaymentReference" class="form-label">เลขอ้างอิง (ไม่บังคับ)</label>
+                        <input asp-for="PaymentReference" class="form-control" maxlength="50" autocomplete="off" placeholder="เลขสลิป / เลขอนุมัติบัตร" />
+                        <div class="form-text">บัตร: ใส่เฉพาะเลขอนุมัติหรือ 4 หลักท้าย ห้ามใส่เลขบัตรเต็ม</div>
+                        <span asp-validation-for="PaymentReference" class="field-error"></span>
+                    </div>
+                </div>
+                <div class="form-check mt-3">
+                    <input asp-for="PaidNow" class="form-check-input" />
+                    <label asp-for="PaidNow" class="form-check-label">รับชำระเงินแล้ว (ยอดตามกล่องสรุปราคา)</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="CheckInNow" class="form-check-input" />
+                    <label asp-for="CheckInNow" class="form-check-label">เช็คอินทันที (เข้าพักวันนี้และชำระแล้ว)</label>
+                </div>
+                <span asp-validation-for="CheckInNow" class="field-error"></span>
+                <div class="cyber-note">ไม่ติ๊ก "รับชำระเงินแล้ว" = ชำระภายหลัง กดรับชำระได้ที่หน้าจัดการการจอง</div>
+            </fieldset>
+
+            <button type="submit" class="cyber-btn w-100 mt-4">บันทึกการจอง</button>
+        </form>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="cyber-booking-box">
+            <div class="cyber-section-title mb-2">สรุปราคา (คำนวณโดยระบบ)</div>
+            <div id="walkin-quote" aria-live="polite">
+                <partial name="_WalkInQuote" model="quote" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Refresh the price / availability box from the server while the form changes
+        // (the server's PriceCalculator is the only place prices are calculated).
+        (() => {
+            const form = document.getElementById('walkin-form');
+            const box = document.getElementById('walkin-quote');
+            if (!form || !box) {
+                return;
+            }
+
+            let timer = 0;
+            let lastQuery = '';
+            const value = (name) => form.querySelector(`[name="${name}"]:not([type="hidden"])`)?.value ?? '';
+            const checked = (name) => form.querySelector(`input[type="checkbox"][name="${name}"]`)?.checked ?? false;
+
+            async function refresh() {
+                const query = new URLSearchParams({
+                    roomId: value('RoomId') || '0',
+                    checkIn: value('CheckIn'),
+                    checkOut: value('CheckOut'),
+                    guests: value('Guests') || '1',
+                    breakfast: checked('Breakfast'),
+                    extraBed: checked('ExtraBed'),
+                    spaSessions: value('SpaSessions') || '0',
+                    email: value('ContactEmail')
+                }).toString();
+
+                if (query === lastQuery) {
+                    return;
+                }
+                lastQuery = query;
+
+                try {
+                    // redirect: 'manual' so an expired session never pastes the log-in page into the box.
+                    const response = await fetch(`${form.dataset.quoteUrl}?${query}`, { redirect: 'manual' });
+                    if (response.ok && query === lastQuery) {
+                        box.innerHTML = await response.text();
+                    }
+                } catch {
+                    // Keep the last box; the server calculates again when the booking is saved.
+                }
+            }
+
+            const schedule = () => {
+                clearTimeout(timer);
+                timer = setTimeout(refresh, 300);
+            };
+
+            form.addEventListener('input', schedule);
+            form.addEventListener('change', schedule);
+
+            // Checking a guest in "now" into a room housekeeping has not finished asks first, like the
+            // check-in button of the bookings page. This form listener runs before site.js, which
+            // shows the data-confirm question.
+            const roomsBeingCleaned = (form.dataset.roomsBeingCleaned || '').split(',').filter(Boolean);
+            form.addEventListener('submit', () => {
+                const roomSelect = form.querySelector('select[name="RoomId"]');
+                const notReady = checked('CheckInNow') && value('CheckIn') === form.dataset.today &&
+                    roomsBeingCleaned.includes(roomSelect?.value ?? '');
+                if (notReady) {
+                    const roomName = (roomSelect.selectedOptions[0]?.textContent ?? '').split(' · ')[0].trim();
+                    form.dataset.confirm = `ห้อง ${roomName} ยังรอแม่บ้านทำความสะอาด — เช็คอินแขกทันทีต่อไหม?`;
+                } else {
+                    delete form.dataset.confirm;
+                }
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,99 @@
+@model List<HotelBooking>
+@{
+    ViewData["Title"] = "ประวัติการจอง";
+    var reviewStars = ViewBag.ReviewStars as Dictionary<int, int> ?? new();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title mb-1">My Reservations</div>
+        <h2 class="cyber-heading mb-0">ประวัติการจองของฉัน</h2>
+    </div>
+    <a class="cyber-btn" asp-action="Rooms">จองห้องพักเพิ่ม</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="cyber-empty">ยังไม่มีประวัติการจอง — <a asp-action="Rooms">เลือกห้องพักเลย</a></div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-dark align-middle cyber-table">
+            <thead>
+                <tr>
+                    <th>เลขที่</th>
+                    <th>ห้องพัก</th>
+                    <th>สถานะ / เข้าพัก</th>
+                    <th>ยอด / การชำระเงิน</th>
+                    <th class="text-end">ดำเนินการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model)
+                {
+                    <tr>
+                        <td><a asp-action="BookingSuccess" asp-route-id="@booking.Id">#@booking.Id</a></td>
+                        <td class="wrap-anywhere">
+                            @booking.RoomName
+                            <div class="cyber-note mt-0">@booking.ServicesText</div>
+                        </td>
+                        <td class="text-nowrap">
+                            <span class="cyber-pill status-pill @BookingStatus.CssClass(booking.Status)">@BookingStatus.ThaiName(booking.Status)</span>
+                            @if (booking.Status == BookingStatus.Cancelled && booking.CancelReason.Length > 0)
+                            {
+                                <div class="cyber-note mt-1 text-wrap">@CancelReasons.ThaiName(booking.CancelReason)</div>
+                            }
+                            <div class="mt-1">@DisplayText.Date(booking.CheckIn)<br />→ @DisplayText.Date(booking.CheckOut)</div>
+                            <div class="cyber-note mt-0">@booking.Nights คืน · @booking.Guests คน</div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-nowrap">@DisplayText.Money(booking.Total)</div>
+                            <span class="cyber-pill status-pill @PaymentStatus.CssClass(booking.PaymentStatus)">@PaymentStatus.ThaiName(booking.PaymentStatus)</span>
+                            @if (booking.AwaitsPaymentChoice)
+                            {
+                                <div class="cyber-note mt-1 text-warning">ยังไม่เลือกวิธีชำระ — เลือกภายใน @DisplayText.Clock(booking.PaymentChoiceDeadline) น.</div>
+                            }
+                            else
+                            {
+                                <div class="cyber-note mt-1">@(booking.PaymentMethod.Length > 0 ? booking.PaymentMethod : "ไม่ได้เลือกวิธีชำระ")</div>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="staff-actions">
+                                <a class="btn btn-outline-light btn-sm" asp-action="BookingSuccess" asp-route-id="@booking.Id">รายละเอียด</a>
+                                @if (BookingReceipt.IsAvailable(booking))
+                                {
+                                    <a class="btn btn-outline-success btn-sm" asp-action="Receipt" asp-route-id="@booking.Id">ใบเสร็จ</a>
+                                }
+                                @if (ReviewRules.CanReview(booking))
+                                {
+                                    if (reviewStars.TryGetValue(booking.Id, out var given))
+                                    {
+                                        <a class="btn btn-outline-warning btn-sm" asp-action="Review" asp-route-id="@booking.Id" title="แก้ไขรีวิว">@given ★ แก้ไขรีวิว</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-warning btn-sm" asp-action="Review" asp-route-id="@booking.Id">รีวิว</a>
+                                    }
+                                }
+                                @if (booking.CanPayOnline)
+                                {
+                                    <a class="btn btn-outline-info btn-sm" asp-action="Payment" asp-route-id="@booking.Id">ชำระเงิน</a>
+                                }
+                                @if (booking.CanCancel)
+                                {
+                                    <form asp-action="CancelBooking" method="post" data-confirm="ยืนยันยกเลิกการจอง #@booking.Id ?">
+                                        <input type="hidden" name="id" value="@booking.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">ยกเลิก</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="cyber-note">ต้องเลือกวิธีชำระเงินภายใน @BookingOptions.PaymentChoiceMinutes นาทีหลังจอง ไม่เช่นนั้นระบบจะยกเลิกการจองอัตโนมัติ · ยกเลิกได้จนถึงวันเช็คอิน (ก่อนเช็คอิน) · ถ้าชำระเงินแล้ว ฝ่ายการเงินจะคืนเงินเต็มจำนวน · ถ้าไม่มาเข้าพักโดยไม่ได้ยกเลิก จะไม่คืนเงิน · เลือกชำระเงินสดไว้ก็เปลี่ยนมาชำระออนไลน์ได้ภายหลัง</div>
+}

@@ -1,0 +1,33 @@
+@model HotelBooking
+@* Price breakdown saved with a booking (bookings made before the breakdown existed show the total only). *@
+<dl class="cyber-summary">
+    @if (Model.RoomTotal > 0)
+    {
+        <div>
+            <dt>ค่าห้อง @DisplayText.Money(Model.PricePerNight) × @Model.Nights คืน</dt>
+            <dd>@DisplayText.Money(Model.RoomTotal)</dd>
+        </div>
+        @if (Model.ServiceTotal > 0)
+        {
+            <div>
+                <dt>ค่าบริการเสริม</dt>
+                <dd>@DisplayText.Money(Model.ServiceTotal)</dd>
+            </div>
+        }
+        @foreach (var (name, amount) in Model.DiscountItems)
+        {
+            <div class="discount">
+                <dt>@name</dt>
+                <dd>−@DisplayText.Money(amount)</dd>
+            </div>
+        }
+        <div>
+            <dt>ภาษี @DisplayText.Percent(BookingOptions.TaxPercent)</dt>
+            <dd>@DisplayText.Money(Model.Tax)</dd>
+        </div>
+    }
+    <div class="total">
+        <dt>ยอดสุทธิ</dt>
+        <dd>@DisplayText.Money(Model.Total)</dd>
+    </div>
+</dl>

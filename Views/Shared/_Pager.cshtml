@@ -1,0 +1,26 @@
+@model PagerModel
+@* Previous / next links of a long list; the filter stays in the links. *@
+@{
+    var paging = Model.Paging;
+    Dictionary<string, string> RouteFor(int page)
+    {
+        var values = new Dictionary<string, string>(Model.RouteValues) { ["page"] = page.ToString(CultureInfo.InvariantCulture) };
+        return values;
+    }
+}
+@if (paging.PageCount > 1)
+{
+    <nav class="cyber-pager" aria-label="เปลี่ยนหน้า">
+        @if (paging.Page > 1)
+        {
+            <a class="btn btn-outline-light btn-sm" asp-action="@Model.Action" asp-all-route-data="RouteFor(1)">« หน้าแรก</a>
+            <a class="btn btn-outline-light btn-sm" asp-action="@Model.Action" asp-all-route-data="RouteFor(paging.Page - 1)">‹ ก่อนหน้า</a>
+        }
+        <span class="cyber-note mt-0">หน้า @paging.Page / @paging.PageCount · รายการที่ @paging.First–@paging.Last จาก @paging.Total.ToString("N0", CultureInfo.InvariantCulture)</span>
+        @if (paging.Page < paging.PageCount)
+        {
+            <a class="btn btn-outline-light btn-sm" asp-action="@Model.Action" asp-all-route-data="RouteFor(paging.Page + 1)">ถัดไป ›</a>
+            <a class="btn btn-outline-light btn-sm" asp-action="@Model.Action" asp-all-route-data="RouteFor(paging.PageCount)">หน้าสุดท้าย »</a>
+        }
+    </nav>
+}

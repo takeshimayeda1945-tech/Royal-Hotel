@@ -1,0 +1,526 @@
+/* Shared styles for the stand-alone Login and Register pages (Views/Home/Login.cshtml, Register.cshtml). */
+
+:root {
+    --cp-yellow: #fcee0a;
+    --cp-red: #ff003c;
+    --cp-cyan: #00f0ff;
+    --cp-bg: #050507;
+    --cp-panel: rgba(10, 10, 15, 0.85);
+    --cp-text: #e6e6e6;
+    --cp-muted: #7a7a85;
+    --cp-success: #3dffa8;
+    --cp-danger: #ff5a79;
+    color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    /* Rajdhani has no Thai letters: Thai text falls back to Chakra Petch. */
+    font-family: 'Rajdhani', 'Chakra Petch', 'Leelawadee UI', 'Tahoma', sans-serif;
+    background: var(--cp-bg);
+    color: var(--cp-text);
+    min-height: 100vh;
+    /* Vertical scrolling must stay possible: the register form is taller than small screens. */
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ---------- Background grid + scanline ---------- */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,240,255,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 2px,
+        rgba(0,0,0,0.35) 3px,
+        transparent 4px
+    );
+    pointer-events: none;
+    z-index: 5;
+    animation: scan 6s linear infinite;
+}
+
+@keyframes scan {
+    0% { background-position-y: 0; }
+    100% { background-position-y: 60px; }
+}
+
+/* ---------- Layout : 2 columns ---------- */
+.cyber-wrapper {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    min-height: 100vh;
+    position: relative;
+    z-index: 2;
+}
+
+/* ---------- LEFT : Image ---------- */
+.cyber-visual {
+    position: relative;
+    background:
+        linear-gradient(135deg, rgba(255,0,60,0.15), rgba(0,240,255,0.10)),
+        url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1400&q=80')
+        center/cover no-repeat;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 60px;
+}
+
+.cyber-visual::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(5,5,7,0.2) 0%,
+        rgba(5,5,7,0.6) 60%,
+        rgba(5,5,7,0.95) 100%
+    );
+}
+
+.cyber-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, transparent 0%, rgba(252,238,10,0.08) 50%, transparent 100%);
+    mix-blend-mode: screen;
+    animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.9; }
+}
+
+.visual-content {
+    position: relative;
+    z-index: 2;
+}
+
+.brand-tag {
+    display: inline-block;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--cp-yellow);
+    border: 1px solid var(--cp-yellow);
+    padding: 6px 14px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    background: rgba(252,238,10,0.05);
+}
+
+.visual-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow:
+        0 0 10px rgba(255,0,60,0.8),
+        2px 2px 0 var(--cp-red);
+    margin-bottom: 16px;
+}
+
+.visual-title span {
+    color: var(--cp-yellow);
+    text-shadow: 0 0 20px rgba(252,238,10,0.9);
+}
+
+.visual-sub {
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: var(--cp-cyan);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.visual-sub::before {
+    content: "▸ ";
+    color: var(--cp-red);
+}
+
+/* corner brackets */
+.corner {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--cp-yellow);
+    z-index: 3;
+}
+.corner.tl { top: 24px; left: 24px; border-right: none; border-bottom: none; }
+.corner.tr { top: 24px; right: 24px; border-left: none; border-bottom: none; }
+.corner.bl { bottom: 24px; left: 24px; border-right: none; border-top: none; }
+.corner.br { bottom: 24px; right: 24px; border-left: none; border-top: none; }
+
+/* ---------- RIGHT : form ---------- */
+.cyber-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: radial-gradient(
+        circle at 80% 30%,
+        rgba(255,0,60,0.10) 0%,
+        transparent 60%
+    ), var(--cp-bg);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--cp-panel);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(252,238,10,0.35);
+    padding: 48px 40px 40px;
+    position: relative;
+    clip-path: polygon(
+        20px 0, 100% 0, 100% calc(100% - 20px),
+        calc(100% - 20px) 100%, 0 100%, 0 20px
+    );
+    box-shadow:
+        0 0 40px rgba(252,238,10,0.15),
+        inset 0 0 40px rgba(0,240,255,0.05);
+}
+
+.login-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100px; height: 3px;
+    background: var(--cp-yellow);
+    box-shadow: 0 0 12px var(--cp-yellow);
+}
+
+.login-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 100px; height: 3px;
+    background: var(--cp-red);
+    box-shadow: 0 0 12px var(--cp-red);
+}
+
+.login-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    text-shadow: 0 0 12px rgba(255,0,60,0.7);
+}
+
+.login-title .accent { color: var(--cp-yellow); }
+
+.login-sub {
+    font-size: 13px;
+    color: var(--cp-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    border-left: 3px solid var(--cp-red);
+    padding-left: 10px;
+}
+
+.form-group {
+    margin-bottom: 22px;
+    position: relative;
+}
+
+.form-label {
+    display: block;
+    font-family: 'Orbitron', 'Chakra Petch', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--cp-yellow);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    width: 100%;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(0,240,255,0.3);
+    color: var(--cp-text);
+    font-family: 'Rajdhani', 'Chakra Petch', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 14px 16px;
+    outline: none;
+    transition: all 0.25s ease;
+    clip-path: polygon(
+        8px 0, 100% 0, 100% calc(100% - 8px),
+        calc(100% - 8px) 100%, 0 100%, 0 8px
+    );
+}
+
+.form-control::placeholder {
+    color: rgba(230,230,230,0.3);
+    letter-spacing: 2px;
+}
+
+.form-control:focus {
+    border-color: var(--cp-cyan);
+    background: rgba(0,240,255,0.05);
+    box-shadow:
+        0 0 15px rgba(0,240,255,0.4),
+        inset 0 0 15px rgba(0,240,255,0.08);
+}
+
+.form-control.input-validation-error {
+    border-color: var(--cp-danger);
+}
+
+.btn-login {
+    width: 100%;
+    margin-top: 12px;
+    padding: 16px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #050507;
+    background: var(--cp-yellow);
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    clip-path: polygon(
+        12px 0, 100% 0, 100% calc(100% - 12px),
+        calc(100% - 12px) 100%, 0 100%, 0 12px
+    );
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-login:hover,
+.btn-login:focus-visible {
+    background: var(--cp-red);
+    color: #fff;
+    box-shadow: 0 0 30px rgba(255,0,60,0.8);
+    transform: translateY(-2px);
+}
+
+.btn-login:active { transform: translateY(0); }
+
+.login-footer {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--cp-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.login-footer a {
+    color: var(--cp-cyan);
+    text-decoration: none;
+    font-weight: 700;
+    border-bottom: 1px dashed var(--cp-cyan);
+    transition: all 0.2s ease;
+}
+
+.login-footer a:hover {
+    color: var(--cp-yellow);
+    border-color: var(--cp-yellow);
+    text-shadow: 0 0 10px var(--cp-yellow);
+}
+
+/* ---------- Messages & validation ---------- */
+.auth-alert {
+    margin-bottom: 18px;
+    padding: 10px 12px;
+    border: 1px solid;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.auth-alert.success {
+    border-color: rgba(61,255,168,0.5);
+    background: rgba(61,255,168,0.08);
+    color: var(--cp-success);
+}
+
+.auth-alert.error {
+    border-color: rgba(255,90,121,0.55);
+    background: rgba(255,0,60,0.1);
+    color: var(--cp-danger);
+}
+
+.auth-alert.info {
+    border-color: rgba(0,240,255,0.45);
+    background: rgba(0,240,255,0.06);
+    color: var(--cp-cyan);
+}
+
+.validation-summary-valid { display: none; }
+
+.validation-summary-errors {
+    margin-bottom: 16px;
+    color: var(--cp-danger);
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.validation-summary-errors ul { list-style: none; }
+
+.field-error {
+    display: block;
+    margin-top: 6px;
+    color: var(--cp-danger);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* ---------- Back link, password box, hints, demo accounts ---------- */
+.auth-back {
+    display: inline-block;
+    margin-bottom: 18px;
+    color: var(--cp-cyan);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-decoration: none;
+}
+
+.auth-back:hover,
+.auth-back:focus-visible {
+    color: var(--cp-yellow);
+}
+
+.password-field {
+    position: relative;
+}
+
+.password-field .form-control {
+    padding-right: 72px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 1px solid rgba(0,240,255,0.35);
+    color: var(--cp-cyan);
+    font-family: 'Chakra Petch', sans-serif;
+    font-size: 13px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+    color: var(--cp-yellow);
+    border-color: var(--cp-yellow);
+}
+
+.field-hint {
+    margin-top: 6px;
+    color: var(--cp-muted);
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.demo-accounts {
+    margin-top: 24px;
+    border: 1px dashed rgba(252,238,10,0.4);
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+.demo-accounts summary {
+    cursor: pointer;
+    color: var(--cp-yellow);
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.demo-accounts ul {
+    list-style: none;
+    margin-top: 10px;
+    display: grid;
+    gap: 6px;
+}
+
+.demo-accounts button {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(0,240,255,0.25);
+    color: var(--cp-text);
+    font-family: 'Rajdhani', 'Chakra Petch', sans-serif;
+    font-size: 14px;
+    padding: 6px 10px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.demo-accounts button:hover,
+.demo-accounts button:focus-visible {
+    border-color: var(--cp-cyan);
+}
+
+.demo-accounts button span {
+    color: var(--cp-muted);
+}
+
+/* Which role's port this log-in page belongs to (Infrastructure/RolePortals.cs). */
+.portal-badge {
+    margin: -24px 0 24px;
+    color: var(--cp-yellow);
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.portal-hint {
+    margin: -16px 0 24px;
+    color: var(--cp-muted);
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .cyber-wrapper { grid-template-columns: 1fr; }
+    .cyber-visual { display: none; }
+    .cyber-login { padding: 32px 16px; }
+    .login-card { padding: 36px 26px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::after,
+    .cyber-visual::after {
+        animation: none;
+    }
+}

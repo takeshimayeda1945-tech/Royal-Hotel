@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "โปรโมชั่น";
+}
+
+<div class="cyber-section-title">Royal Promotions</div>
+<h2 class="cyber-heading mb-2">โปรโมชั่นตามเงื่อนไข</h2>
+<p class="cyber-room-desc mt-0">ไม่ต้องกรอกรหัส — ระบบตรวจเงื่อนไขและหักส่วนลดให้อัตโนมัติในหน้าจองห้องพัก ใช้ร่วมกันได้ทุกข้อ (สำหรับสมาชิกที่เข้าสู่ระบบ)</p>
+
+<div class="row g-4">
+    @foreach (var rule in PriceCalculator.Rules)
+    {
+        <div class="col-md-6">
+            <div class="cyber-room-card">
+                <div class="cyber-room-body">
+                    <span class="cyber-pill">@rule.Badge</span>
+                    <div class="cyber-room-name">@rule.Title</div>
+                    <p class="cyber-room-desc mb-0">@rule.Condition</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="cyber-section-title mt-4">How the price is calculated · วิธีคำนวณราคา</div>
+<ol class="cyber-prose ps-3">
+    <li>จำนวนคืน = วันเช็คเอาท์ − วันเช็คอิน</li>
+    <li>ค่าห้องพัก = ราคาห้องต่อคืน × จำนวนคืน</li>
+    <li>ค่าบริการเสริม = อาหารเช้า @DisplayText.Money(BookingOptions.BreakfastPerPersonPerNight) × คน × คืน + เตียงเสริม @DisplayText.Money(BookingOptions.ExtraBedPerNight) × คืน + สปา @DisplayText.Money(BookingOptions.SpaPerSession) × ครั้ง</li>
+    <li>ราคาหลังส่วนลด = ค่าห้องพัก + ค่าบริการเสริม − ส่วนลดโปรโมชั่น</li>
+    <li>ภาษี @DisplayText.Percent(BookingOptions.TaxPercent) คิดจากราคาหลังส่วนลด · ยอดสุทธิ = ราคาหลังส่วนลด + ภาษี</li>
+</ol>
+
+<a class="cyber-btn mt-2" asp-action="Rooms">เลือกห้องพัก</a>

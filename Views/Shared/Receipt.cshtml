@@ -1,0 +1,113 @@
+@model ReceiptViewModel
+@* ใบเสร็จรับเงิน: a white "paper" on screen, and the only thing on the page when printed. *@
+@{
+    var b = Model.Booking;
+    ViewData["Title"] = "ใบเสร็จ " + Model.Number;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 no-print">
+    <div>
+        <div class="cyber-section-title mb-1">Receipt · ใบเสร็จรับเงิน</div>
+        <h2 class="cyber-heading mb-0">การจอง #@b.Id</h2>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="cyber-btn" data-print>พิมพ์ / บันทึกเป็น PDF</button>
+        <a class="cyber-btn-outline" href="@Model.BackUrl">@Model.BackLabel</a>
+    </div>
+</div>
+
+<article class="receipt-paper" aria-label="ใบเสร็จรับเงิน @Model.Number">
+    <header class="receipt-head">
+        <div>
+            <div class="receipt-hotel">ROYAL HOTEL</div>
+            <div class="receipt-muted">royalhotel.com</div>
+        </div>
+        <div class="text-end">
+            <div class="receipt-title">ใบเสร็จรับเงิน</div>
+            <div class="receipt-muted">RECEIPT</div>
+        </div>
+    </header>
+
+    <dl class="receipt-meta">
+        <div><dt>เลขที่</dt><dd>@Model.Number</dd></div>
+        <div><dt>วันที่รับเงิน</dt><dd>@DisplayText.Timestamp(Model.IssuedAt)</dd></div>
+        <div><dt>อ้างอิงการจอง</dt><dd>#@b.Id</dd></div>
+    </dl>
+
+    <div class="receipt-parties">
+        <div>
+            <div class="receipt-label">ได้รับเงินจาก</div>
+            <div class="receipt-strong">@b.GuestName</div>
+            @if (b.ContactEmail.Length > 0)
+            {
+                <div class="receipt-muted">@b.ContactEmail</div>
+            }
+            @if (Model.ForStaff && b.UserId == null)
+            {
+                <div class="receipt-muted">แขกไม่มีบัญชีสมาชิก</div>
+            }
+        </div>
+        <div>
+            <div class="receipt-label">การเข้าพัก</div>
+            <div class="receipt-strong">@b.RoomName</div>
+            <div class="receipt-muted">@DisplayText.Date(b.CheckIn) – @DisplayText.Date(b.CheckOut) · @b.Nights คืน · @b.Guests คน · @b.BedType</div>
+        </div>
+    </div>
+
+    <table class="receipt-table">
+        <thead>
+            <tr>
+                <th>รายการ</th>
+                <th class="text-end">จำนวน</th>
+                <th class="text-end">ราคาต่อหน่วย</th>
+                <th class="text-end">จำนวนเงิน</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var line in Model.Lines)
+            {
+                <tr>
+                    <td>@line.Description</td>
+                    <td class="text-end text-nowrap">@line.Quantity @line.Unit</td>
+                    <td class="text-end text-nowrap">@DisplayText.Money(line.UnitPrice)</td>
+                    <td class="text-end text-nowrap">@DisplayText.Money(line.Amount)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <dl class="receipt-totals">
+        <div><dt>รวมเป็นเงิน</dt><dd>@DisplayText.Money(Model.Subtotal)</dd></div>
+        @foreach (var (name, amount) in b.DiscountItems)
+        {
+            <div class="receipt-discount"><dt>ส่วนลด: @name</dt><dd>−@DisplayText.Money(amount)</dd></div>
+        }
+        @if (b.Discount > 0 && !b.DiscountItems.Any())
+        {
+            <div class="receipt-discount"><dt>ส่วนลด</dt><dd>−@DisplayText.Money(b.Discount)</dd></div>
+        }
+        <div><dt>มูลค่าก่อนภาษี</dt><dd>@DisplayText.Money(Model.BeforeTax)</dd></div>
+        <div><dt>ภาษีมูลค่าเพิ่ม @DisplayText.Percent(BookingOptions.TaxPercent)</dt><dd>@DisplayText.Money(b.Tax)</dd></div>
+        <div class="receipt-grand"><dt>จำนวนเงินรวมทั้งสิ้น</dt><dd>@DisplayText.Money(b.Total)</dd></div>
+    </dl>
+    <div class="receipt-words">(@Model.AmountInWords)</div>
+
+    <div class="receipt-payment">
+        <span class="receipt-label">ชำระโดย</span>
+        @(b.PaymentMethod.Length > 0 ? b.PaymentMethod : "ไม่ระบุ")
+        @if (b.PaymentReference.Length > 0)
+        {
+            <span class="receipt-muted">· อ้างอิง @b.PaymentReference</span>
+        }
+    </div>
+
+    @if (b.IsClosedNoShow)
+    {
+        <p class="receipt-note">แขกไม่ได้มาเข้าพักและไม่ได้ยกเลิกก่อนวันเช็คอิน — ตามเงื่อนไขการจอง ไม่คืนเงิน</p>
+    }
+
+    <footer class="receipt-foot">
+        <span>เอกสารนี้ออกโดยระบบคอมพิวเตอร์ · ขอบคุณที่ใช้บริการ Royal Hotel</span>
+        <span>พิมพ์เมื่อ @DisplayText.Timestamp(DateTime.Now)</span>
+    </footer>
+</article>

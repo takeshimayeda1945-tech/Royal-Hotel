@@ -1,0 +1,24 @@
+﻿@model ErrorViewModel
+@inject RolePortals Portals
+@{
+    ViewData["Title"] = "เกิดข้อผิดพลาด";
+}
+
+<div class="text-center py-4">
+    <div class="error-code">500</div>
+    <h2 class="cyber-heading mt-3">ขออภัย ระบบเกิดข้อผิดพลาด</h2>
+    <p class="cyber-room-meta mx-auto" style="max-width: 560px;">
+        คำขอของคุณยังไม่สำเร็จ กรุณาลองใหม่อีกครั้ง หากยังพบปัญหา โปรดแจ้งเจ้าหน้าที่พร้อมรหัสอ้างอิงด้านล่าง
+    </p>
+    @if (Model.ShowRequestId)
+    {
+        <p class="cyber-note">รหัสอ้างอิง: <code>@Model.RequestId</code></p>
+    }
+    <div class="d-flex justify-content-center gap-2 flex-wrap mt-3">
+        <a class="cyber-btn" asp-controller="Home" asp-action="Index">กลับหน้าหลัก</a>
+        @if (!RolePortals.IsBackOffice(Portals.RoleOf(Context)))
+        {
+            <a class="cyber-btn-outline" asp-controller="Home" asp-action="Rooms">ดูห้องพัก</a>
+        }
+    </div>
+</div>

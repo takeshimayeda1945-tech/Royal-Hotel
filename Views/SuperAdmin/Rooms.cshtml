@@ -1,0 +1,161 @@
+@model List<HotelRoom>
+@{
+    ViewData["Title"] = "จัดการห้องพัก";
+    var editRoom = ViewBag.EditRoom as HotelRoom ?? new HotelRoom { Capacity = 2, BedType = BookingOptions.DoubleBed, IsActive = true };
+    var isEditing = editRoom.Id != 0;
+    var bookingCounts = ViewBag.BookingCounts as Dictionary<int, int> ?? new();
+    var openRooms = Model.Count(r => r.IsActive);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title">Room Management</div>
+        <h2 class="cyber-heading mb-0">จัดการห้องพักและราคา</h2>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="cyber-btn-outline">Dashboard</a>
+</div>
+
+@* The form spans the full width above the list (so its errors are seen first), and the list below
+   has room for every column, including the buttons. "แก้ไข" in the list jumps back up to the form. *@
+<div class="cyber-booking-box mb-4" id="room-form">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h4 class="mb-0">@(isEditing ? $"แก้ไขห้องพัก #{editRoom.Id} · {editRoom.Name}" : "เพิ่มห้องพัก")</h4>
+        @if (isEditing)
+        {
+            <a class="cyber-back-link" asp-action="Rooms">ปิด ✕</a>
+        }
+    </div>
+    <form asp-action="SaveRoom" method="post">
+        <div asp-validation-summary="ModelOnly" class="cyber-validation-summary"></div>
+        <input type="hidden" name="Id" value="@editRoom.Id" />
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="roomName">ชื่อห้อง</label>
+                <input name="Name" id="roomName" class="form-control" value="@editRoom.Name" maxlength="100" required />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="roomPrice">ราคา/คืน (บาท)</label>
+                <input name="Price" id="roomPrice" type="number" min="1" step="1" class="form-control" value="@(editRoom.Price > 0 ? editRoom.Price.ToString("0.##", CultureInfo.InvariantCulture) : null)" required />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="roomCapacity">จำนวนคน</label>
+                <input name="Capacity" id="roomCapacity" type="number" min="1" max="@BookingOptions.MaxGuests" class="form-control" value="@editRoom.Capacity" required />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="roomType">ประเภทห้อง</label>
+                <select name="RoomType" id="roomType" class="form-select" aria-describedby="roomTypeHelp">
+                    @foreach (var roomType in RoomTypes.All)
+                    {
+                        <option value="@roomType" selected="@(roomType == editRoom.RoomType)">@roomType</option>
+                    }
+                </select>
+                <div id="roomTypeHelp" class="form-text">Deluxe ลด 10% คืนศุกร์–เสาร์</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="roomBed">เตียง</label>
+                <select name="BedType" id="roomBed" class="form-select">
+                    @foreach (var bedType in BookingOptions.BedTypes)
+                    {
+                        <option value="@bedType" selected="@(bedType == editRoom.BedType)">@bedType</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="roomArea">พื้นที่</label>
+                <input name="Area" id="roomArea" class="form-control" value="@editRoom.Area" maxlength="100" placeholder="เช่น Downtown" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="roomTag">ป้ายกำกับ</label>
+                <input name="Tag" id="roomTag" class="form-control" value="@editRoom.Tag" maxlength="50" placeholder="เช่น Popular, VIP" />
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="roomImage">รูปภาพ URL</label>
+                <input name="ImageUrl" id="roomImage" class="form-control" value="@editRoom.ImageUrl" maxlength="500" placeholder="https://... (เว้นว่างไว้เพื่อใช้รูปตั้งต้น)" />
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="roomDescription">รายละเอียด</label>
+                <textarea name="Description" id="roomDescription" class="form-control" rows="2" maxlength="1000">@editRoom.Description</textarea>
+            </div>
+            @* The hidden "false" inputs make an unticked box post false (otherwise IsActive could never be turned off). *@
+            <div class="col-md-8">
+                <div class="form-check">
+                    <input name="HasSpa" id="roomSpa" type="checkbox" value="true" class="form-check-input" checked="@editRoom.HasSpa" />
+                    <input type="hidden" name="HasSpa" value="false" />
+                    <label class="form-check-label" for="roomSpa">มีบริการสปา</label>
+                </div>
+                <div class="form-check">
+                    <input name="IsActive" id="roomActive" type="checkbox" value="true" class="form-check-input" checked="@editRoom.IsActive" />
+                    <input type="hidden" name="IsActive" value="false" />
+                    <label class="form-check-label" for="roomActive">เปิดให้จอง</label>
+                    <div class="form-text">ห้องที่มีประวัติการจองลบไม่ได้ — ให้เอาเครื่องหมายนี้ออกเพื่อปิดรับจองแทน</div>
+                </div>
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="cyber-btn flex-fill">@(isEditing ? "บันทึกการแก้ไข" : "เพิ่มห้องพัก")</button>
+                @if (isEditing)
+                {
+                    <a class="cyber-btn-outline" asp-action="Rooms">ยกเลิก</a>
+                }
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="cyber-section-title">ห้องพักทั้งหมด @Model.Count ห้อง · เปิดให้จอง @openRooms ห้อง</div>
+@if (!Model.Any())
+{
+    <div class="cyber-empty">ยังไม่มีห้องพัก — เพิ่มห้องแรกจากฟอร์มด้านบน</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-dark align-middle cyber-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>ห้อง</th>
+                    <th class="text-end">ราคา</th>
+                    <th>คน</th>
+                    <th>ประเภท</th>
+                    <th>สถานะ</th>
+                    <th class="text-end">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var room in Model)
+                {
+                    <tr class="@(room.Id == editRoom.Id ? "table-active" : null)">
+                        <td><img class="cyber-thumb" src="@room.DisplayImageUrl" alt="" loading="lazy" onerror="this.onerror=null;this.src='@HotelRoom.PlaceholderImageUrl';" /></td>
+                        <td>
+                            @room.Name
+                            <div class="cyber-note mt-0">@string.Join(" · ", new[] { room.Area, room.HasSpa ? "สปา" : null }.Where(part => !string.IsNullOrWhiteSpace(part)))</div>
+                        </td>
+                        <td class="text-end text-nowrap">@DisplayText.Money(room.Price)</td>
+                        <td>@room.Capacity</td>
+                        <td class="text-nowrap">@room.RoomType<div class="cyber-note mt-0">@room.BedType</div></td>
+                        <td class="text-nowrap">
+                            <span class="cyber-pill status-pill @(room.IsActive ? "status-confirmed" : "status-completed")">@(room.IsActive ? "ใช้งาน" : "ปิด")</span>
+                            <div class="cyber-note mt-1">จอง @(bookingCounts.TryGetValue(room.Id, out var count) ? count : 0) ครั้ง</div>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-outline-info btn-sm" asp-action="Rooms" asp-route-editId="@room.Id" asp-fragment="room-form">แก้ไข</a>
+                            @if (bookingCounts.ContainsKey(room.Id))
+                            {
+                                @* A room with bookings keeps its history: it can only be closed (see the form). *@
+                                <button type="button" class="btn btn-outline-secondary btn-sm ms-1" disabled title="มีประวัติการจอง — ปิดการใช้งานห้องแทนการลบ">ลบ</button>
+                            }
+                            else
+                            {
+                                <form asp-action="DeleteRoom" method="post" class="d-inline ms-1" data-confirm="ลบห้องพัก &quot;@room.Name&quot; ?">
+                                    <input type="hidden" name="id" value="@room.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">ลบ</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

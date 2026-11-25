@@ -1,0 +1,176 @@
+@model BookingCheckoutModel
+@{
+    ViewData["Title"] = "จองห้องพัก";
+    var availabilityWarning = ViewBag.AvailabilityWarning as string;
+    var room = Model.Room;
+}
+
+<div class="mb-3">
+    <a class="cyber-back-link" asp-action="RoomDetails" asp-route-id="@Model.RoomId" asp-route-checkIn="@Model.CheckIn" asp-route-checkOut="@Model.CheckOut" asp-route-guests="@Model.Guests">&larr; กลับไปหน้ารายละเอียดห้อง</a>
+</div>
+
+<ol class="cyber-steps" aria-label="ขั้นตอนการจอง">
+    <li class="active">1. รายละเอียดการจอง</li>
+    <li>2. ชำระเงิน</li>
+    <li>3. เสร็จสิ้น</li>
+</ol>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="cyber-section-title">Booking Details · หน้าจองห้องพัก</div>
+
+        @if (availabilityWarning != null)
+        {
+            <div class="cyber-alert cyber-alert-error" role="alert">@availabilityWarning</div>
+        }
+
+        <form id="checkout-form" asp-action="Checkout" method="post" data-quote-url="@Url.Action("Quote")">
+            <input type="hidden" asp-for="RoomId" />
+            <div asp-validation-summary="ModelOnly" class="cyber-validation-summary"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="CheckIn" class="form-label">Check-in</label>
+                    <input asp-for="CheckIn" type="date" class="form-control" min="@DateInput.ToValue(DateTime.Today)" data-role="check-in" required />
+                    <span asp-validation-for="CheckIn" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CheckOut" class="form-label">Check-out</label>
+                    <input asp-for="CheckOut" type="date" class="form-control" min="@DateInput.ToValue(DateTime.Today.AddDays(1))" data-role="check-out" data-max-nights="@BookingOptions.MaxNights" required />
+                    <div class="form-text">จองได้สูงสุด @BookingOptions.MaxNights คืนต่อครั้ง</div>
+                    <span asp-validation-for="CheckOut" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Guests" class="form-label">จำนวนผู้เข้าพัก</label>
+                    <input asp-for="Guests" type="number" min="1" max="@Math.Max(room.Capacity, 1)" class="form-control" required />
+                    <div class="form-text">ห้องนี้รองรับสูงสุด @room.Capacity คน</div>
+                    <span asp-validation-for="Guests" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="BedType" class="form-label">ประเภทเตียง</label>
+                    <select asp-for="BedType" asp-items="@(new SelectList(BookingOptions.BedTypes))" class="form-select"></select>
+                    <span asp-validation-for="BedType" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="GuestName" class="form-label">ชื่อผู้เข้าพัก</label>
+                    <input asp-for="GuestName" class="form-control" maxlength="100" autocomplete="name" required />
+                    <span asp-validation-for="GuestName" class="field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ContactEmail" class="form-label">อีเมลติดต่อ</label>
+                    <input asp-for="ContactEmail" type="email" class="form-control" maxlength="200" autocomplete="email" required />
+                    <span asp-validation-for="ContactEmail" class="field-error"></span>
+                </div>
+            </div>
+
+            <fieldset class="cyber-booking-box mt-4">
+                <legend class="cyber-section-title mb-2">บริการเสริม</legend>
+                <div class="form-check">
+                    <input asp-for="Breakfast" class="form-check-input" />
+                    <label asp-for="Breakfast" class="form-check-label">อาหารเช้า (@DisplayText.Money(BookingOptions.BreakfastPerPersonPerNight) ต่อคนต่อคืน)</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="ExtraBed" class="form-check-input" />
+                    <label asp-for="ExtraBed" class="form-check-label">เตียงเสริม (@DisplayText.Money(BookingOptions.ExtraBedPerNight) ต่อคืน)</label>
+                </div>
+                @if (room.HasSpa)
+                {
+                    <div class="row g-2 align-items-center mt-1">
+                        <div class="col-auto">
+                            <label asp-for="SpaSessions" class="form-label mb-0">สปา (@DisplayText.Money(BookingOptions.SpaPerSession) ต่อครั้ง)</label>
+                        </div>
+                        <div class="col-auto">
+                            <input asp-for="SpaSessions" type="number" min="0" max="@BookingOptions.MaxSpaSessions" class="form-control form-control-sm" style="width: 6rem;" />
+                        </div>
+                        <div class="col-auto"><span class="cyber-note mt-0">ครั้ง</span></div>
+                    </div>
+                    <span asp-validation-for="SpaSessions" class="field-error"></span>
+                }
+                else
+                {
+                    <input type="hidden" asp-for="SpaSessions" value="0" />
+                    <div class="cyber-note">ห้องนี้ไม่มีบริการสปา</div>
+                }
+            </fieldset>
+
+            <div class="mt-4">
+                <label asp-for="SpecialRequest" class="form-label">คำขอพิเศษ (ไม่บังคับ)</label>
+                <textarea asp-for="SpecialRequest" class="form-control" rows="3" maxlength="@BookingOptions.MaxSpecialRequestLength"
+                          placeholder="เช่น ขอห้องชั้นสูง · จะมาถึงหลัง 22:00 น. · แพ้อาหารทะเล"></textarea>
+                <div class="form-text">โรงแรมจะพยายามจัดให้ตามคำขอ แต่ไม่สามารถรับประกันได้ · ไม่เกิน @BookingOptions.MaxSpecialRequestLength ตัวอักษร</div>
+                <span asp-validation-for="SpecialRequest" class="field-error"></span>
+            </div>
+
+            <button type="submit" class="cyber-btn w-100 mt-4">ยืนยันการจอง และไปหน้าชำระเงิน</button>
+            <div class="cyber-note text-center">หลังยืนยัน ให้เลือกวิธีชำระเงินภายใน @BookingOptions.PaymentChoiceMinutes นาที (เลือกชำระเงินสดที่โรงแรมก็ได้) ไม่เช่นนั้นระบบจะยกเลิกการจองให้อัตโนมัติ</div>
+        </form>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="cyber-room-card">
+            <img src="@room.DisplayImageUrl" alt="@room.Name" onerror="this.onerror=null;this.src='@HotelRoom.PlaceholderImageUrl';" />
+            <div class="cyber-room-body">
+                <span class="cyber-pill">@room.RoomType</span>
+                <div class="cyber-room-name">@room.Name</div>
+                <div class="cyber-price">@DisplayText.Money(room.Price) <small>/ คืน</small></div>
+                <div id="price-summary" aria-live="polite">
+                    <partial name="_PriceSummary" model="Model.Quote" />
+                </div>
+                <div class="cyber-note">ยอดสุดท้ายคำนวณโดยระบบตอนยืนยันการจอง</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Refresh the price summary from the server whenever the form changes, so the page always
+        // shows exactly what PriceCalculator will charge (discount rules live on the server only).
+        (() => {
+            const form = document.getElementById('checkout-form');
+            const summary = document.getElementById('price-summary');
+            if (!form || !summary) {
+                return;
+            }
+
+            let timer = 0;
+            let lastQuery = '';
+
+            async function refresh() {
+                const value = (name) => form.querySelector(`[name="${name}"]:not([type="hidden"])`)?.value ?? '';
+                const checked = (name) => form.querySelector(`input[type="checkbox"][name="${name}"]`)?.checked ?? false;
+                const query = new URLSearchParams({
+                    roomId: form.querySelector('[name="RoomId"]').value,
+                    checkIn: value('CheckIn'),
+                    checkOut: value('CheckOut'),
+                    guests: value('Guests') || '1',
+                    breakfast: checked('Breakfast'),
+                    extraBed: checked('ExtraBed'),
+                    spaSessions: value('SpaSessions') || '0'
+                }).toString();
+
+                if (query === lastQuery) {
+                    return;
+                }
+                lastQuery = query;
+
+                try {
+                    const response = await fetch(`${form.dataset.quoteUrl}?${query}`, { headers: { 'X-Requested-With': 'fetch' } });
+                    if (response.ok && query === lastQuery) {
+                        summary.innerHTML = await response.text();
+                    }
+                } catch {
+                    // Keep the last summary; the server recalculates on submit anyway.
+                }
+            }
+
+            const schedule = () => {
+                clearTimeout(timer);
+                timer = setTimeout(refresh, 250);
+            };
+
+            form.addEventListener('input', schedule);
+            form.addEventListener('change', schedule);
+        })();
+    </script>
+}

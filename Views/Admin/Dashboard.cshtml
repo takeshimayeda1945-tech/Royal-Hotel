@@ -1,0 +1,192 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var months = ViewBag.Months as List<MonthStat> ?? new();
+    var roomStats = ViewBag.RoomStats as List<RoomStat> ?? new();
+    var statusCounts = ViewBag.StatusCounts as List<(string Status, int Count)> ?? new();
+    var recent = ViewBag.RecentBookings as List<HotelBooking> ?? new();
+    var reviewSummary = ViewBag.ReviewSummary as RatingSummary;
+    var hiddenReviews = ViewBag.HiddenReviews as int? ?? 0;
+    var recentAudit = ViewBag.RecentAudit as List<AuditLog> ?? new();
+    var maxRevenue = Math.Max(months.Select(m => m.Revenue).DefaultIfEmpty(0).Max(), 1);
+    var maxBookings = Math.Max(months.Select(m => m.Bookings).DefaultIfEmpty(0).Max(), 1);
+}
+
+<div class="cyber-section-title">Admin Dashboard</div>
+<h2 class="cyber-heading mb-3">รายได้และจำนวนการจอง</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xxl-3"><div class="stat-tile"><span>รายได้ทั้งหมด (ชำระแล้ว)</span><strong>@DisplayText.MoneyWhole((decimal)ViewBag.Revenue)</strong></div></div>
+    <div class="col-sm-6 col-xxl-3"><div class="stat-tile"><span>รายได้เดือนนี้</span><strong>@DisplayText.MoneyWhole((decimal)ViewBag.RevenueThisMonth)</strong></div></div>
+    <div class="col-sm-6 col-xxl-3"><div class="stat-tile"><span>การจองทั้งหมด</span><strong>@ViewBag.BookingCount</strong><small>เดือนนี้ @ViewBag.BookingsThisMonth · ยกเลิก @ViewBag.CancelledCount</small></div></div>
+    <div class="col-sm-6 col-xxl-3">
+        <div class="stat-tile">
+            <span>อัตราการเข้าพักเดือนนี้</span>
+            <strong>@DisplayText.Percent(Math.Round((decimal)ViewBag.OccupancyPercent, 1))</strong>
+            <div class="stat-meter" aria-hidden="true"><span style="width: @(((decimal)ViewBag.OccupancyPercent).ToString("0.#", CultureInfo.InvariantCulture))%"></span></div>
+            <small>@ViewBag.OccupiedNights จาก @ViewBag.AvailableNights ห้อง-คืน · กำลังเข้าพัก @ViewBag.InHouse · ห้องที่เปิด @ViewBag.ActiveRooms</small>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-4">
+    <a class="cyber-btn-outline btn-sm" asp-controller="Staff" asp-action="Bookings" asp-route-view="@StaffController.ViewToday">รอเช็คอิน: @ViewBag.ArrivalsToday</a>
+    <a class="cyber-btn-outline btn-sm" asp-controller="Staff" asp-action="Bookings" asp-route-view="@StaffController.ViewPayments">รอตรวจสอบการโอน: @ViewBag.PendingPayments</a>
+    <a class="cyber-btn-outline btn-sm" asp-controller="Staff" asp-action="Bookings" asp-route-view="@StaffController.ViewNoShow">ไม่มาเข้าพัก (รอปิดรายการ): @ViewBag.NoShows</a>
+    <a class="cyber-btn-outline btn-sm" asp-controller="Housekeeping" asp-action="Index">ห้องรอทำความสะอาด: @ViewBag.OpenCleaning</a>
+    <a class="cyber-btn-outline btn-sm" asp-controller="SuperAdmin" asp-action="Rooms">จัดการห้องพักและราคา</a>
+    <span class="cyber-btn-outline btn-sm" style="cursor: default;">ผู้ใช้ทั้งหมด: @ViewBag.UserCount</span>
+</div>
+
+@* Two single-series bar charts (no dual axis). Hover/focus a bar for its exact value; the table below lists every number. *@
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <figure class="bar-chart" aria-labelledby="revenue-title">
+            <figcaption id="revenue-title" class="cyber-section-title">รายได้ต่อเดือน (บาท, ตามวันที่รับชำระ)</figcaption>
+            <div class="bar-chart-plot">
+                @foreach (var m in months)
+                {
+                    var height = m.Revenue <= 0 ? 0 : Math.Max((double)(m.Revenue / maxRevenue) * 100, 2);
+                    <div class="bar-chart-col" tabindex="0" data-tip="@m.Label: @DisplayText.Money(m.Revenue)" aria-label="@m.Label รายได้ @DisplayText.Money(m.Revenue)">
+                        <div class="bar-chart-bar" style="height: @height.ToString("0.#", CultureInfo.InvariantCulture)%"></div>
+                    </div>
+                }
+            </div>
+            <div class="bar-chart-labels">
+                @foreach (var m in months)
+                {
+                    <span>@m.Label.Split(' ')[0]</span>
+                }
+            </div>
+        </figure>
+    </div>
+    <div class="col-lg-6">
+        <figure class="bar-chart" aria-labelledby="bookings-title">
+            <figcaption id="bookings-title" class="cyber-section-title">จำนวนการจองต่อเดือน (ตามวันที่จอง)</figcaption>
+            <div class="bar-chart-plot">
+                @foreach (var m in months)
+                {
+                    var height = m.Bookings == 0 ? 0 : Math.Max(m.Bookings * 100.0 / maxBookings, 2);
+                    <div class="bar-chart-col" tabindex="0" data-tip="@m.Label: @m.Bookings การจอง" aria-label="@m.Label @m.Bookings การจอง">
+                        <div class="bar-chart-bar" style="height: @height.ToString("0.#", CultureInfo.InvariantCulture)%"></div>
+                    </div>
+                }
+            </div>
+            <div class="bar-chart-labels">
+                @foreach (var m in months)
+                {
+                    <span>@m.Label.Split(' ')[0]</span>
+                }
+            </div>
+        </figure>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="cyber-section-title">ตารางสรุปรายเดือน</div>
+        <table class="table table-dark align-middle cyber-table">
+            <thead><tr><th>เดือน</th><th class="text-end">การจอง</th><th class="text-end">รายได้</th></tr></thead>
+            <tbody>
+                @foreach (var m in months)
+                {
+                    <tr><td>@m.Label</td><td class="text-end">@m.Bookings</td><td class="text-end">@DisplayText.Money(m.Revenue)</td></tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="cyber-section-title mt-4">สรุปตามห้องพัก (การจอง/คืน ไม่รวมที่ยกเลิก · รายได้ = ยอดที่ชำระแล้ว)</div>
+        @if (!roomStats.Any())
+        {
+            <div class="cyber-empty">ยังไม่มีการจอง</div>
+        }
+        else
+        {
+            <table class="table table-dark align-middle cyber-table">
+                <thead><tr><th>ห้อง</th><th class="text-end">การจอง</th><th class="text-end">คืน</th><th class="text-end">รายได้</th></tr></thead>
+                <tbody>
+                    @foreach (var r in roomStats)
+                    {
+                        <tr><td>@r.RoomName</td><td class="text-end">@r.Bookings</td><td class="text-end">@r.Nights</td><td class="text-end">@DisplayText.Money(r.Revenue)</td></tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+    <div class="col-lg-5">
+        <div class="cyber-section-title">การจองตามสถานะ</div>
+        <table class="table table-dark align-middle cyber-table">
+            <tbody>
+                @foreach (var s in statusCounts)
+                {
+                    <tr>
+                        <td><span class="cyber-pill status-pill @BookingStatus.CssClass(s.Status)">@BookingStatus.ThaiName(s.Status)</span></td>
+                        <td class="text-end">@s.Count</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="cyber-section-title mt-4">การจองล่าสุด</div>
+        @if (!recent.Any())
+        {
+            <div class="cyber-empty">ยังไม่มีการจอง</div>
+        }
+        else
+        {
+            <table class="table table-dark align-middle cyber-table">
+                <tbody>
+                    @foreach (var b in recent)
+                    {
+                        <tr>
+                            <td>#@b.Id<div class="cyber-note mt-0">@b.CreatedAt.ToString("dd/MM HH:mm", CultureInfo.InvariantCulture)</div></td>
+                            <td>@b.GuestName<div class="cyber-note mt-0">@b.RoomName</div></td>
+                            <td class="text-end">@DisplayText.Money(b.Total)<div class="cyber-note mt-0">@PaymentStatus.ThaiName(b.PaymentStatus)</div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-4">
+        <div class="cyber-section-title">รีวิวจากผู้เข้าพัก</div>
+        <div class="stat-tile">
+            <span>คะแนนเฉลี่ยทั้งโรงแรม</span>
+            @if (reviewSummary != null)
+            {
+                <strong>@reviewSummary.AverageText <small>/ 5</small></strong>
+                <small><partial name="_Stars" model="reviewSummary.Average" /> จาก @reviewSummary.Count.ToString("N0", CultureInfo.InvariantCulture) รีวิว · ซ่อนไว้ @hiddenReviews</small>
+            }
+            else
+            {
+                <strong>–</strong><small>ยังไม่มีรีวิว</small>
+            }
+        </div>
+        <a class="cyber-btn-outline w-100 mt-2" asp-action="Reviews">จัดการรีวิว</a>
+    </div>
+    <div class="col-lg-8">
+        <div class="cyber-section-title">บันทึกการกระทำล่าสุด</div>
+        @if (!recentAudit.Any())
+        {
+            <div class="cyber-empty">ยังไม่มีบันทึก</div>
+        }
+        else
+        {
+            <table class="table table-dark align-middle cyber-table">
+                <tbody>
+                    @foreach (var line in recentAudit)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@line.CreatedAt.ToString("dd/MM HH:mm", CultureInfo.InvariantCulture)<div class="cyber-note mt-0">@line.UserName</div></td>
+                            <td><span class="cyber-pill status-pill @AuditActions.CssClass(line.Action)">@AuditActions.ThaiName(line.Action)</span></td>
+                            <td class="wrap-anywhere cyber-note mt-0">@(line.Details.Length > 90 ? line.Details[..90] + "…" : line.Details)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <a class="cyber-btn-outline" asp-action="AuditLog">ดูบันทึกการกระทำทั้งหมด</a>
+    </div>
+</div>

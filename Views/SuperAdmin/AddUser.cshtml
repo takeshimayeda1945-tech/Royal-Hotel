@@ -1,0 +1,80 @@
+@model UserFormModel
+@{
+    ViewData["Title"] = "เพิ่มผู้ใช้";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title">User Management</div>
+        <h2 class="cyber-heading mb-0">เพิ่มผู้ใช้ใหม่</h2>
+    </div>
+    <a asp-action="UserList" class="cyber-btn-outline">&larr; กลับไปรายชื่อผู้ใช้</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="cyber-booking-box">
+            <form asp-action="AddUser" method="post">
+                <div asp-validation-summary="ModelOnly" class="cyber-validation-summary"></div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Name" class="form-label">ชื่อ</label>
+                        <input asp-for="Name" class="form-control" placeholder="ชื่อ-นามสกุล" maxlength="100" required />
+                        <span asp-validation-for="Name" class="field-error"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Email" class="form-label">อีเมล (ใช้เข้าสู่ระบบ)</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="name@royalhotel.com" maxlength="200" required />
+                        <span asp-validation-for="Email" class="field-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PhoneNumber" class="form-label">เบอร์โทร</label>
+                        <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="081-XXX-XXXX" maxlength="50" required />
+                        <span asp-validation-for="PhoneNumber" class="field-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Birthday" class="form-label">วันเกิด</label>
+                        <input asp-for="Birthday" type="date" class="form-control" min="@DateInput.ToValue(AccountRules.MinBirthday)" max="@DateInput.ToValue(DateTime.Today)" required />
+                        <span asp-validation-for="Birthday" class="field-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Role" class="form-label">บทบาท</label>
+                        <select asp-for="Role" class="form-select">
+                            @foreach (var role in UserRoles.All)
+                            {
+                                <option value="@role" selected="@(Model.Role == role)">@role · @UserRoles.ThaiName(role)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Role" class="field-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label">รหัสผ่าน</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="อย่างน้อย @AccountRules.MinPasswordLength ตัวอักษร" minlength="@AccountRules.MinPasswordLength" maxlength="@AccountRules.MaxPasswordLength" autocomplete="new-password" required />
+                        <span asp-validation-for="Password" class="field-error"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="cyber-btn flex-fill">บันทึกผู้ใช้</button>
+                    <a class="cyber-btn-outline" asp-action="UserList">ยกเลิก</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="cyber-section-title">สิทธิ์ของแต่ละบทบาท</div>
+        <table class="table table-dark align-middle cyber-table">
+            <tbody>
+                <tr><td class="text-nowrap">@UserRoles.Customer</td><td>จองห้อง ชำระเงิน ดู/ยกเลิกการจองของตัวเอง</td></tr>
+                <tr><td class="text-nowrap">@UserRoles.Staff</td><td>จองห้องให้แขก walk-in จัดการการจอง ตรวจสอบการชำระเงิน เช็คอิน/เช็คเอาท์ แจ้งแม่บ้านทำความสะอาด</td></tr>
+                <tr><td class="text-nowrap">@UserRoles.Housekeeper</td><td>ดูห้องที่ต้องทำความสะอาด และดูเวรของตัวเอง</td></tr>
+                <tr><td class="text-nowrap">@UserRoles.Finance</td><td>ตรวจยอดโอน ดูยอดรับชำระ บันทึกการคืนเงิน ดาวน์โหลดรายงาน CSV</td></tr>
+                <tr><td class="text-nowrap">@UserRoles.Admin</td><td>Dashboard รายได้ แก้ไขห้องพักและราคา จัดเวรแม่บ้าน และงานของ Staff/Finance</td></tr>
+                <tr><td class="text-nowrap">@UserRoles.SuperAdmin</td><td>ทุกอย่างของ Admin และจัดการผู้ใช้</td></tr>
+            </tbody>
+        </table>
+        <div class="cyber-note">รหัสผ่านถูกเก็บแบบ hash — ถ้าผู้ใช้ลืมรหัสผ่าน ให้ตั้งรหัสผ่านใหม่จากหน้าแก้ไขผู้ใช้</div>
+    </div>
+</div>

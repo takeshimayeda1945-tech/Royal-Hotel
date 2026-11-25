@@ -1,0 +1,267 @@
+﻿@model Intouch_67173986_L003.Models.CyberUser
+@{
+    Layout = null;
+    ViewData["Title"] = "Add User // NETRUNNER ADMIN";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cp-yellow: #fcee0a;
+            --cp-cyan: #00f0ff;
+            --cp-red: #ff0055;
+            --cp-dark: #090b10;
+            --cp-panel: #11161d;
+            --cp-panel-2: #171d26;
+            --cp-text: #e7ecff;
+            --cp-muted: #91a5b8;
+            --cp-line: rgba(255,255,255,0.14);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            font-family: 'Orbitron', sans-serif;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(0,240,255,0.12), transparent 18%),
+                radial-gradient(circle at 80% 10%, rgba(252,238,10,0.17), transparent 18%),
+                linear-gradient(135deg, #090b10 0%, #101720 100%);
+            color: var(--cp-text);
+        }
+
+        .cyber-shell {
+            width: min(760px, 100%);
+            border: 1px solid var(--cp-line);
+            background: rgba(17, 22, 29, 0.9);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.12), 0 0 0 1px rgba(252,238,10,0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cyber-shell::before,
+        .cyber-shell::after {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(0,240,255,0.15);
+            pointer-events: none;
+        }
+
+        .cyber-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 28px 18px;
+            border-bottom: 1px solid var(--cp-line);
+            background: rgba(0,0,0,0.15);
+        }
+
+        .brand {
+            font-size: 0.9rem;
+            letter-spacing: 0.24rem;
+            color: var(--cp-yellow);
+            text-transform: uppercase;
+        }
+
+        .nav-link {
+            color: var(--cp-cyan);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 0.12rem;
+            text-transform: uppercase;
+        }
+
+        .nav-link:hover { color: var(--cp-yellow); }
+
+        .content {
+            padding: 32px 28px 28px;
+        }
+
+        .title {
+            margin: 0 0 12px;
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1.1;
+            color: var(--cp-yellow);
+            text-transform: uppercase;
+            letter-spacing: 0.12rem;
+        }
+
+        .subtitle {
+            margin: 0 0 22px;
+            color: var(--cp-muted);
+            font-size: 0.8rem;
+            letter-spacing: 0.18rem;
+            text-transform: uppercase;
+        }
+
+        .alert {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border: 1px solid rgba(0,240,255,0.35);
+            background: rgba(0,240,255,0.06);
+            color: var(--cp-cyan);
+            font-size: 0.75rem;
+            letter-spacing: 0.08rem;
+            text-transform: uppercase;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.68rem;
+            letter-spacing: 0.13rem;
+            color: var(--cp-muted);
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid rgba(0,240,255,0.35);
+            background: rgba(9,11,16,0.9);
+            color: var(--cp-text);
+            font-family: 'Orbitron', sans-serif;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus {
+            border-color: var(--cp-yellow);
+            box-shadow: 0 0 0 1px rgba(252,238,10,0.25);
+        }
+
+        .actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .btn {
+            border: 1px solid rgba(252,238,10,0.5);
+            padding: 14px 22px;
+            text-transform: uppercase;
+            letter-spacing: 0.12rem;
+            font-size: 0.72rem;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .btn-primary {
+            background: var(--cp-yellow);
+            color: #0d1117;
+            box-shadow: 0 0 20px rgba(252,238,10,0.25);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--cp-cyan);
+            border-color: rgba(0,240,255,0.5);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        @@media (max-width: 680px) {
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            .cyber-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-shell">
+        <div class="cyber-header">
+            <div class="brand">// Netrunner Admin</div>
+            <a class="nav-link" asp-controller="Home" asp-action="UserList">Back to Userlist</a>
+        </div>
+
+        <div class="content">
+            <h1 class="title">Add User</h1>
+            <p class="subtitle">Create new netrunner identity</p>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert">
+                    @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+                </div>
+            }
+
+            <form asp-controller="Home" asp-action="AddUser" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="field full">
+                    <label asp-for="Name">Name</label>
+                    <input asp-for="Name" placeholder="V // Johnny Silverhand" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="field full">
+                    <label asp-for="Email">Email</label>
+                    <input asp-for="Email" type="email" placeholder="user@nightcity.net" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="PhoneNumber">Phone Number</label>
+                    <input asp-for="PhoneNumber" type="tel" placeholder="081-XXX-XXXX" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Birthday">Birthday</label>
+                    <input asp-for="Birthday" type="date" />
+                    <span asp-validation-for="Birthday" class="text-danger"></span>
+                </div>
+
+                <div class="field full">
+                    <label asp-for="Password">Password</label>
+                    <input asp-for="Password" type="password" placeholder="••••••••" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="actions">
+                    <a class="btn btn-secondary" asp-controller="Home" asp-action="UserList">Cancel</a>
+                    <button class="btn btn-primary" type="submit">Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+@* Top bar shared by both layouts: logo, main menu, and log-in buttons or the signed-in user. *@
+@inject RolePortals Portals
+@{
+    var userName = Context.Session.GetString(SessionKeys.UserName);
+    var isSignedIn = !string.IsNullOrWhiteSpace(Context.Session.GetString(SessionKeys.UserId));
+    string[] roomPages = { "Rooms", "RoomDetails", "Checkout", "Payment", "BookingSuccess" };
+    // Back-office ports (front desk, housekeeping, finance, admin) have no customer menu: their pages
+    // are in the side menu, and the logo leads to the role's first page.
+    var portalRole = Portals.RoleOf(Context);
+    var isBackOffice = RolePortals.IsBackOffice(portalRole);
+}
+<a class="skip-link" href="#main-content">ข้ามไปเนื้อหาหลัก</a>
+<header class="cyber-header">
+    <nav class="navbar navbar-expand-lg container py-2" aria-label="เมนูหลัก">
+        <a class="navbar-brand cyber-brand" asp-area="" asp-controller="Home" asp-action="Index">
+            <span class="brand-mark" aria-hidden="true">R</span>
+            ROYAL HOTEL
+        </a>
+        @if (isBackOffice)
+        {
+            <span class="portal-chip" title="ระบบหลังบ้านของบทบาทนี้ทำงานที่พอร์ตนี้เท่านั้น">@UserRoles.ThaiName(portalRole) · พอร์ต @Context.Connection.LocalPort</span>
+        }
+
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="เปิด/ปิดเมนู">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav mx-auto align-items-center gap-2">
+                @if (isBackOffice)
+                {
+                    <li class="nav-item"><a class="nav-link cyber-link" href="@Portals.UrlFor(UserRoles.Customer, Context.Request)" target="_blank" rel="noopener">เว็บไซต์ลูกค้า ↗</a></li>
+                }
+                else
+                {
+                    <li class="nav-item"><a class="nav-link cyber-link @ViewContext.ActiveClass("Home", "Index")" aria-current="@ViewContext.AriaCurrent("Home", "Index")" asp-area="" asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="nav-item"><a class="nav-link cyber-link @ViewContext.ActiveClass("Home", roomPages)" aria-current="@ViewContext.AriaCurrent("Home", "Rooms")" asp-area="" asp-controller="Home" asp-action="Rooms">Rooms</a></li>
+                    <li class="nav-item"><a class="nav-link cyber-link @ViewContext.ActiveClass("Home", "Promotions")" aria-current="@ViewContext.AriaCurrent("Home", "Promotions")" asp-area="" asp-controller="Home" asp-action="Promotions">Offers</a></li>
+                    <li class="nav-item"><a class="nav-link cyber-link @ViewContext.ActiveClass("Home", "BookingHistory")" aria-current="@ViewContext.AriaCurrent("Home", "BookingHistory")" asp-area="" asp-controller="Home" asp-action="BookingHistory">My Stay</a></li>
+                    <li class="nav-item"><a class="nav-link cyber-link @ViewContext.ActiveClass("Home", "Privacy")" aria-current="@ViewContext.AriaCurrent("Home", "Privacy")" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                }
+            </ul>
+
+            <ul class="navbar-nav align-items-center gap-2 ms-auto">
+                @if (isSignedIn)
+                {
+                    <li class="nav-item">
+                        <a class="cyber-user-pill" asp-area="" asp-controller="Account" asp-action="Index" title="บัญชีของฉัน">
+                            <span class="avatar" aria-hidden="true">@ViewHelpers.Initial(userName)</span>
+                            <span class="pill-name">@userName</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form asp-area="" asp-controller="Home" asp-action="Logout" method="post" class="d-inline">
+                            <button type="submit" class="cyber-btn">Log Out</button>
+                        </form>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item"><a class="cyber-btn-outline" asp-area="" asp-controller="Home" asp-action="Login">Log In</a></li>
+                    @* Only customers sign up, and only on the customers' port. *@
+                    @if (!isBackOffice)
+                    {
+                        <li class="nav-item"><a class="cyber-btn" asp-area="" asp-controller="Home" asp-action="Register">Register</a></li>
+                    }
+                }
+            </ul>
+        </div>
+    </nav>
+</header>

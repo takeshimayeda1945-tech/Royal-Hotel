@@ -1,0 +1,174 @@
+﻿@model RoomListViewModel
+@{
+    ViewData["Title"] = "ห้องพักทั้งหมด";
+    var search = Model.Search;
+    var filter = Model.Filter;
+    // The search bar is rendered by both layouts (_Layout and _Layout2), so it is not repeated here.
+    // Links that clear one part keep the other: "clear search" keeps the filter and the other way round.
+    var searchValues = search.RouteValues();
+    var filterValues = filter.RouteValues();
+    // Hints in the empty price boxes: the cheapest and dearest room of the current result.
+    var lowest = Model.LowestPrice is decimal low ? "จาก " + DisplayText.Money(decimal.Truncate(low)) : null;
+    var highest = Model.HighestPrice is decimal high ? "ถึง " + DisplayText.Money(decimal.Ceiling(high)) : null;
+}
+
+<div class="row g-4 align-items-center mb-4">
+    <div class="col-lg-8">
+        <div class="cyber-section-title">All Rooms · หน้ารวมห้องพัก</div>
+        <h2 class="cyber-heading mb-0">เลือกห้องพักที่ใช่สำหรับคุณ</h2>
+        @if (search.IsFiltered)
+        {
+            <p class="cyber-search-summary mt-3 mb-0">
+                ห้องว่าง <strong>@Model.SearchResultCount</strong> ห้อง ·
+                @DisplayText.Date(search.CheckInDate) – @DisplayText.Date(search.CheckOutDate) (@search.Nights คืน) ·
+                @search.Guests คน
+                @if (search.Destination != null)
+                {
+                    <text>· “@search.Destination”</text>
+                }
+                <a class="ms-2" asp-action="Rooms" asp-all-route-data="filterValues">ล้างการค้นหา</a>
+            </p>
+            @if (search.DatesAdjusted)
+            {
+                <p class="cyber-note mb-0">* วันที่ที่เลือกไม่ถูกต้อง (เป็นวันที่ผ่านมาแล้ว หรือเช็คเอาท์ก่อนเช็คอิน) ระบบจึงปรับให้อัตโนมัติ</p>
+            }
+        }
+    </div>
+    @if (Model.Rooms.Any())
+    {
+        <div class="col-lg-4 text-lg-end">
+            <a class="cyber-btn" href="#suites">Book Now</a>
+        </div>
+    }
+</div>
+
+@if (Model.SearchResultCount > 0)
+{
+    <form asp-action="Rooms" method="get" id="room-filter" class="cyber-booking-box room-filter mb-4" aria-label="กรองและเรียงห้องพัก">
+        @foreach (var (name, value) in searchValues)
+        {
+            <input type="hidden" name="@name" value="@value" />
+        }
+        <div class="row g-2 align-items-end">
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label" for="filter-type">ประเภทห้อง</label>
+                <select id="filter-type" name="type" class="form-select form-select-sm" data-auto-submit>
+                    <option value="">ทุกประเภท (@Model.AnyTypeCount)</option>
+                    @foreach (var roomType in RoomTypes.All)
+                    {
+                        <option value="@roomType" selected="@(roomType == filter.Type)">@roomType (@Model.TypeCounts.GetValueOrDefault(roomType))</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-lg-2">
+                <label class="form-label" for="filter-min">ราคาต่ำสุด / คืน</label>
+                <input id="filter-min" type="number" name="minPrice" value="@filter.MinPrice" min="0" step="100" inputmode="numeric" class="form-control form-control-sm" placeholder="@lowest" />
+            </div>
+            <div class="col-6 col-lg-2">
+                <label class="form-label" for="filter-max">ราคาสูงสุด / คืน</label>
+                <input id="filter-max" type="number" name="maxPrice" value="@filter.MaxPrice" min="0" step="100" inputmode="numeric" class="form-control form-control-sm" placeholder="@highest" />
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label" for="filter-sort">เรียงตาม</label>
+                <select id="filter-sort" name="sort" class="form-select form-select-sm" data-auto-submit>
+                    @foreach (var (value, label) in RoomFilterModel.SortOptions)
+                    {
+                        <option value="@value" selected="@(value == filter.Sort)">@label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-2 d-flex gap-2">
+                <button type="submit" class="cyber-btn-outline room-filter-button flex-fill">กรอง</button>
+                @if (filterValues.Count > 0)
+                {
+                    <a class="cyber-btn-outline room-filter-button" asp-action="Rooms" asp-all-route-data="searchValues" title="ล้างตัวกรอง" aria-label="ล้างตัวกรอง">ล้าง</a>
+                }
+            </div>
+        </div>
+        @if (filter.HasFilter)
+        {
+            <div class="cyber-note mb-0">แสดง <strong>@Model.Rooms.Count</strong> จาก @Model.SearchResultCount ห้อง@(search.IsFiltered ? "ที่ว่าง" : "")</div>
+        }
+    </form>
+}
+
+<div id="suites" class="row g-4">
+    @foreach (var room in Model.Rooms)
+    {
+        var guests = Math.Min(search.Guests, Math.Max(room.Capacity, 1));
+        var meta = string.Join(" · ", new[] { room.RoomType, room.Area, $"{room.Capacity} Guests", room.BedType }.Where(part => !string.IsNullOrWhiteSpace(part)));
+        <div class="col-md-6 col-xl-4">
+            <div class="cyber-room-card cyber-room-card--listing">
+                <img src="@room.DisplayImageUrl" alt="@room.Name" loading="lazy" onerror="this.onerror=null;this.src='@HotelRoom.PlaceholderImageUrl';" />
+                <div class="cyber-room-body">
+                    @if (!string.IsNullOrWhiteSpace(room.Tag))
+                    {
+                        <span class="cyber-pill">@room.Tag</span>
+                    }
+                    <div class="cyber-room-name">@room.Name</div>
+                    <div class="cyber-room-meta">@meta</div>
+                    @if (Model.Ratings.TryGetValue(room.Id, out var rating))
+                    {
+                        <a class="room-rating" asp-action="RoomDetails" asp-route-id="@room.Id" asp-route-checkIn="@search.CheckIn" asp-route-checkOut="@search.CheckOut" asp-route-guests="@guests" asp-fragment="reviews">
+                            <partial name="_Stars" model="rating.Average" />
+                            <strong>@rating.AverageText</strong> <span>(@rating.Count รีวิว)</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="room-rating room-rating--none">ยังไม่มีรีวิว</div>
+                    }
+                    <div class="cyber-price">@DisplayText.Money(room.Price) <small>/ night</small></div>
+                    @if (!string.IsNullOrWhiteSpace(room.Description))
+                    {
+                        <p class="cyber-room-desc">@room.Description</p>
+                    }
+                    <ul class="cyber-feature-list">
+                        <li>@room.BedType</li>
+                        <li>รองรับ @room.Capacity คน</li>
+                        @if (room.HasSpa)
+                        {
+                            <li>บริการสปา</li>
+                        }
+                    </ul>
+                    <div class="d-flex gap-2 cyber-room-actions">
+                        <a class="cyber-btn flex-fill" asp-action="RoomDetails" asp-route-id="@room.Id" asp-route-checkIn="@search.CheckIn" asp-route-checkOut="@search.CheckOut" asp-route-guests="@guests">View Suite</a>
+                        <a class="cyber-btn-outline flex-fill" asp-action="Checkout" asp-route-roomId="@room.Id" asp-route-checkIn="@search.CheckIn" asp-route-checkOut="@search.CheckOut" asp-route-guests="@guests">Reserve</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Rooms.Any())
+{
+    <div class="cyber-empty">
+        @if (Model.SearchResultCount > 0)
+        {
+            <text>ไม่มีห้องที่ตรงกับตัวกรอง (ประเภทห้อง / ช่วงราคา) — </text>
+            <a asp-action="Rooms" asp-all-route-data="searchValues">ล้างตัวกรอง</a>
+        }
+        else if (search.IsFiltered)
+        {
+            <text>ไม่พบห้องว่างตามเงื่อนไขที่ค้นหา ลองเปลี่ยนวันที่ จำนวนผู้เข้าพัก หรือพื้นที่ — </text>
+            <a asp-action="Rooms">ดูห้องพักทั้งหมด</a>
+        }
+        else
+        {
+            <text>ยังไม่มีห้องพักที่เปิดให้บริการในขณะนี้</text>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Changing the room type or the order applies it at once; the price boxes wait for the button
+        // (or Enter), so moving from one box to the other does not reload the page.
+        document.getElementById('room-filter')?.addEventListener('change', (event) => {
+            if (event.target instanceof HTMLSelectElement && event.target.hasAttribute('data-auto-submit')) {
+                event.target.form?.requestSubmit();
+            }
+        });
+    </script>
+}

@@ -1,0 +1,200 @@
+@model List<HotelBooking>
+@{
+    ViewData["Title"] = "จัดการการจอง";
+    var view = ViewBag.View as string ?? StaffController.ViewToday;
+    var query = ViewBag.Query as string;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var roomsBeingCleaned = ViewBag.RoomsBeingCleaned as HashSet<int> ?? new();
+    var rooms = ViewBag.Rooms as List<HotelRoom> ?? new();
+    var maxRows = ViewBag.MaxRows as int? ?? 300;
+    // Admins also get a link to each booking's history in the audit log.
+    var canSeeAuditLog = UserRoles.IsIn(Context.Session.GetString(SessionKeys.UserRole), UserRoles.Managers);
+    var tabs = new (string Key, string Label, int? Count)[]
+    {
+        (StaffController.ViewToday, "วันนี้ (เข้า/ออก)", (int)ViewBag.ArrivalsToday + (int)ViewBag.DeparturesToday),
+        (StaffController.ViewInHouse, "กำลังเข้าพัก", (int)ViewBag.InHouse),
+        (StaffController.ViewPayments, "ตรวจสอบการชำระเงิน", (int)ViewBag.PendingPayments),
+        (StaffController.ViewUpcoming, "การจองที่จะมาถึง", null),
+        (StaffController.ViewNoShow, "ไม่มาเข้าพัก", (int)ViewBag.NoShows),
+        (StaffController.ViewAll, "ทั้งหมด", null)
+    };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title mb-1">Front Desk</div>
+        <h2 class="cyber-heading mb-0">จัดการการจอง · ตรวจสอบการชำระเงิน</h2>
+    </div>
+    <a class="cyber-btn" asp-action="WalkIn">+ จองให้แขก walk-in</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="stat-tile"><span>รอเช็คอิน (รวมมาสาย)</span><strong>@ViewBag.ArrivalsToday</strong></div></div>
+    <div class="col-6 col-xl-3"><div class="stat-tile"><span>ถึงกำหนดเช็คเอาท์</span><strong>@ViewBag.DeparturesToday</strong></div></div>
+    <div class="col-6 col-xl-3"><div class="stat-tile"><span>กำลังเข้าพัก</span><strong>@ViewBag.InHouse</strong></div></div>
+    <div class="col-6 col-xl-3"><div class="stat-tile"><span>รอตรวจสอบการโอน</span><strong>@ViewBag.PendingPayments</strong></div></div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <nav class="cyber-tabs" aria-label="มุมมองการจอง">
+        @foreach (var tab in tabs)
+        {
+            <a class="@(tab.Key == view ? "active" : null)" aria-current="@(tab.Key == view ? "page" : null)" asp-action="Bookings" asp-route-view="@tab.Key" asp-route-q="@query">
+                @tab.Label@(tab.Count is int count ? $" ({count})" : "")
+            </a>
+        }
+    </nav>
+    <form asp-action="Bookings" method="get" class="d-flex gap-2 ms-auto" role="search">
+        <input type="hidden" name="view" value="@view" />
+        <input type="search" name="q" value="@query" class="form-control form-control-sm" placeholder="เลขที่ / ชื่อ / อีเมล / ห้อง" aria-label="ค้นหาการจอง" maxlength="100" />
+        <button type="submit" class="btn btn-outline-info btn-sm">ค้นหา</button>
+    </form>
+</div>
+
+@if (view == StaffController.ViewNoShow)
+{
+    <div class="cyber-alert cyber-alert-info">การจองที่เลยวันเช็คเอาท์แล้วแต่แขกไม่ได้มาเช็คอิน — กด "ปิดรายการ" · ไม่คืนเงิน (ลูกค้ายกเลิกได้ถึงวันเช็คอินเท่านั้น): ยอดที่ชำระแล้วเป็นรายได้ของโรงแรม ยอดโอนที่รอตรวจสอบให้ยืนยันหรือปฏิเสธตามปกติ</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="cyber-empty">ไม่มีการจองในมุมมองนี้@(string.IsNullOrEmpty(query) ? "" : $" ที่ตรงกับ “{query}”")</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-dark align-middle cyber-table">
+            <thead>
+                <tr>
+                    <th>เลขที่</th>
+                    <th>ผู้เข้าพัก / ห้อง</th>
+                    <th>สถานะ / เข้าพัก</th>
+                    <th>ยอด / การชำระเงิน</th>
+                    <th class="text-end">ดำเนินการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    var roomNotReady = b.CanCheckIn && roomsBeingCleaned.Contains(b.RoomId);
+                    <tr>
+                        <td>#@b.Id</td>
+                        <td class="wrap-anywhere">
+                            @b.GuestName
+                            <div class="cyber-note mt-0">@(b.ContactEmail.Length > 0 ? b.ContactEmail + " · " : "")@b.Guests คน@(b.UserId == null ? " · ไม่มีบัญชีสมาชิก" : "")</div>
+                            <div class="mt-1">@b.RoomName</div>
+                            <div class="cyber-note mt-0">@b.ServicesText</div>
+                            @if (b.SpecialRequest.Length > 0)
+                            {
+                                <div class="special-request special-request--compact mt-1"><span class="special-request-label">คำขอพิเศษ:</span> @b.SpecialRequest</div>
+                            }
+                            @if (roomNotReady)
+                            {
+                                <div class="cyber-note mt-0 text-warning">⚠ ห้องยังรอแม่บ้านทำความสะอาด</div>
+                            }
+                        </td>
+                        <td class="text-nowrap">
+                            <span class="cyber-pill status-pill @BookingStatus.CssClass(b.Status)">@BookingStatus.ThaiName(b.Status)</span>
+                            @if (b.Status == BookingStatus.Cancelled && b.CancelReason.Length > 0)
+                            {
+                                <div class="cyber-note mt-1 text-wrap">@CancelReasons.ThaiName(b.CancelReason)</div>
+                            }
+                            <div class="mt-1">@DisplayText.Date(b.CheckIn)<br />→ @DisplayText.Date(b.CheckOut)</div>
+                            <div class="cyber-note mt-0">@b.Nights คืน</div>
+                            @if (b.IsArrivalDue && b.CheckIn.Date < DateTime.Today)
+                            {
+                                <div class="cyber-note mt-0 text-warning">มาสาย (ควรเช็คอิน @DisplayText.Date(b.CheckIn))</div>
+                            }
+                            else if (b.IsNoShow)
+                            {
+                                <div class="cyber-note mt-0 text-danger">เลยกำหนด ไม่มาเข้าพัก</div>
+                            }
+                            else if (b.Status == BookingStatus.CheckedIn && b.CheckOut.Date < DateTime.Today)
+                            {
+                                <div class="cyber-note mt-0 text-warning">เกินวันเช็คเอาท์</div>
+                            }
+                        </td>
+                        <td class="wrap-anywhere">
+                            <div class="fw-bold text-nowrap">@DisplayText.Money(b.Total)</div>
+                            <span class="cyber-pill status-pill @PaymentStatus.CssClass(b.PaymentStatus)">@PaymentStatus.ThaiName(b.PaymentStatus)</span>
+                            @if (b.AwaitsPaymentChoice)
+                            {
+                                <div class="cyber-note mt-1 text-warning">ลูกค้ายังไม่เลือกวิธีชำระ · ยกเลิกอัตโนมัติ @DisplayText.Clock(b.PaymentChoiceDeadline) น.</div>
+                            }
+                            else
+                            {
+                                <div class="cyber-note mt-1">@(b.PaymentMethod.Length > 0 ? b.PaymentMethod : "ไม่ได้เลือกวิธี")@(b.PaymentReference.Length > 0 ? " · " + b.PaymentReference : "")</div>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="staff-actions">
+                                @if (b.PaymentStatus == PaymentStatus.Pending)
+                                {
+                                    <form asp-action="ConfirmPayment" method="post"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-success btn-sm">ยืนยันยอดโอน</button></form>
+                                    <form asp-action="RejectPayment" method="post" data-confirm="ปฏิเสธการแจ้งโอนของการจอง #@b.Id ?"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-warning btn-sm">ไม่พบยอดโอน</button></form>
+                                }
+                                else if (b.PaymentStatus == PaymentStatus.Unpaid && b.Status == BookingStatus.Confirmed && !b.IsNoShow)
+                                {
+                                    <form asp-action="ConfirmPayment" method="post" data-confirm="รับชำระเงินสด @DisplayText.Money(b.Total) สำหรับการจอง #@b.Id ?"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-success btn-sm">รับชำระเงินสด</button></form>
+                                }
+                                @if (b.CanCheckIn)
+                                {
+                                    <form asp-action="CheckIn" method="post" data-confirm="@(roomNotReady ? $"ห้อง {b.RoomName} ยังรอทำความสะอาด — เช็คอินต่อไหม?" : null)"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-info btn-sm">เช็คอิน</button></form>
+                                }
+                                @if (b.CanCheckOut)
+                                {
+                                    <form asp-action="CheckOut" method="post"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-warning btn-sm">เช็คเอาท์</button></form>
+                                }
+                                @if (BookingReceipt.IsAvailable(b))
+                                {
+                                    <a class="btn btn-outline-light btn-sm" asp-action="Receipt" asp-route-id="@b.Id" asp-route-returnUrl="@returnUrl">ใบเสร็จ</a>
+                                }
+                                @if (canSeeAuditLog)
+                                {
+                                    <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="AuditLog" asp-route-entity="@AuditEntities.Booking" asp-route-id="@b.Id" title="ใครทำอะไรกับการจองนี้">ประวัติ</a>
+                                }
+                                @if (b.IsNoShow)
+                                {
+                                    <form asp-action="Cancel" method="post" data-confirm="ปิดรายการไม่มาเข้าพัก #@b.Id ? (ไม่คืนเงิน)"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-danger btn-sm">ปิดรายการ</button></form>
+                                }
+                                else if (b.Status == BookingStatus.Confirmed)
+                                {
+                                    <form asp-action="Cancel" method="post" data-confirm="ยกเลิกการจอง #@b.Id ?@(b.PaymentStatus is PaymentStatus.Paid or PaymentStatus.Pending ? " (ส่งเรื่องคืนเงินให้ฝ่ายการเงิน)" : "")"><input type="hidden" name="id" value="@b.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-danger btn-sm">ยกเลิก</button></form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="cyber-note">
+        เช็คอินได้เมื่อชำระเงินแล้วและถึงวันเช็คอิน · เมื่อเช็คเอาท์ ระบบจะส่งห้องให้แม่บ้านทำความสะอาดอัตโนมัติ
+        @if (Model.Count >= maxRows)
+        {
+            <text>· แสดง @maxRows รายการแรก — ใช้ช่องค้นหาเพื่อหาการจองอื่น</text>
+        }
+    </div>
+}
+
+<div class="cyber-booking-box mt-4">
+    <div class="cyber-section-title mb-2">แจ้งแม่บ้านทำความสะอาดห้อง (เช่น แขกขอเปลี่ยนผ้าปู)</div>
+    <form asp-controller="Housekeeping" asp-action="AddTask" method="post" class="row g-2 align-items-center">
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <div class="col-sm-4">
+            <select name="roomId" class="form-select" aria-label="ห้อง" required>
+                <option value="">เลือกห้อง</option>
+                @foreach (var room in rooms)
+                {
+                    <option value="@room.Id">@room.Name@(roomsBeingCleaned.Contains(room.Id) ? " (มีงานค้าง)" : "")</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-5">
+            <input name="note" class="form-control" maxlength="200" placeholder="หมายเหตุ" aria-label="หมายเหตุ" />
+        </div>
+        <div class="col-sm-3 d-grid">
+            <button type="submit" class="cyber-btn-outline">ส่งงานให้แม่บ้าน</button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,43 @@
+@model WalkInQuoteModel
+@* Price and availability box of the walk-in form. Also returned by Staff/WalkInQuote while the form changes. *@
+@if (Model.Room == null)
+{
+    <div class="cyber-empty">เลือกห้องพักเพื่อดูราคาและสถานะห้องว่าง</div>
+}
+else
+{
+    var room = Model.Room;
+    <div class="cyber-room-name">@room.Name</div>
+    <div class="cyber-room-meta">@room.RoomType · @room.BedType · รองรับ @room.Capacity คน · @(room.HasSpa ? "มีบริการสปา" : "ไม่มีบริการสปา")</div>
+    <div class="cyber-price">@DisplayText.Money(room.Price) <small>/ คืน</small></div>
+
+    @if (!Model.DatesValid)
+    {
+        <p class="cyber-note availability-taken mb-0" role="status">เลือกวันเช็คอิน (ตั้งแต่วันนี้) และวันเช็คเอาท์ให้ถูกต้อง</p>
+    }
+    else if (Model.RoomTaken)
+    {
+        <p class="cyber-note availability-taken mb-0" role="status">✕ ห้องนี้ไม่ว่างในช่วงวันที่เลือก</p>
+    }
+    else
+    {
+        <p class="cyber-note availability-ok mb-0" role="status">✓ ห้องว่างในช่วงวันที่เลือก</p>
+    }
+
+    @if (Model.RoomBeingCleaned)
+    {
+        <p class="cyber-note text-warning mb-0" role="status">⚠ ห้องนี้ยังรอแม่บ้านทำความสะอาด — ถ้าเช็คอินทันที ให้ตรวจห้องให้พร้อมก่อนส่งกุญแจ หรือเลือกห้องอื่น</p>
+    }
+
+    <partial name="_PriceSummary" model="Model.Quote" />
+}
+<div class="cyber-note">
+    @if (Model.MemberName != null)
+    {
+        <text>สมาชิก: <strong class="text-brand">@Model.MemberName</strong> — การจองจะผูกกับบัญชีนี้และได้โปรโมชั่นของสมาชิก</text>
+    }
+    else
+    {
+        <text>แขกทั่วไป (ไม่มีบัญชีสมาชิก) — ไม่ได้ส่วนลดเดือนเกิดและส่วนลดสมาชิก</text>
+    }
+</div>

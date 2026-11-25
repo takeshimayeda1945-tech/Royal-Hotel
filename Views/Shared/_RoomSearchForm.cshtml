@@ -1,0 +1,38 @@
+@* Room search bar: filters Home/Rooms by destination, dates, guests and availability. *@
+@{
+    var search = ViewData["RoomSearch"] as RoomSearchModel ?? RoomSearchModel.Create();
+    // On the room list, a new search keeps the type / price filter and the order chosen there.
+    var filter = ViewData["RoomFilter"] as RoomFilterModel;
+    var minCheckIn = DateInput.ToValue(DateTime.Today);
+    var minCheckOut = DateInput.ToValue(search.CheckInDate.AddDays(1));
+    var maxCheckOut = DateInput.ToValue(search.CheckInDate.AddDays(BookingOptions.MaxNights));
+}
+<form asp-area="" asp-controller="Home" asp-action="Rooms" method="get" class="row g-3 align-items-center" role="search">
+    @if (filter != null)
+    {
+        foreach (var (name, value) in filter.RouteValues())
+        {
+            <input type="hidden" name="@name" value="@value" />
+        }
+    }
+    <div class="col-md-3">
+        <input type="text" class="form-control" name="destination" value="@search.Destination" placeholder="Area or suite name" maxlength="100" aria-label="พื้นที่หรือชื่อห้อง" />
+    </div>
+    <div class="col-6 col-md-2">
+        <input type="date" class="form-control" name="checkIn" value="@search.CheckIn" min="@minCheckIn" data-role="check-in" aria-label="วันเช็คอิน" required />
+    </div>
+    <div class="col-6 col-md-2">
+        <input type="date" class="form-control" name="checkOut" value="@search.CheckOut" min="@minCheckOut" max="@maxCheckOut" data-role="check-out" data-max-nights="@BookingOptions.MaxNights" aria-label="วันเช็คเอาท์" required />
+    </div>
+    <div class="col-md-2">
+        <select class="form-select" name="guests" aria-label="จำนวนผู้เข้าพัก">
+            @for (var i = 1; i <= BookingOptions.MaxGuests; i++)
+            {
+                <option value="@i" selected="@(i == search.Guests)">@i @(i == 1 ? "Guest" : "Guests")</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3 d-grid">
+        <button type="submit" class="cyber-btn">Check Availability</button>
+    </div>
+</form>

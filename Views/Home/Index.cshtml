@@ -1,0 +1,67 @@
+@model List<HotelRoom>
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="row g-4 align-items-center mb-4">
+    <div class="col-lg-8">
+        <div class="cyber-section-title">Welcome to Royal Hotel</div>
+        <h2 class="cyber-heading mb-2">จองห้องพักออนไลน์ ง่าย ครบ จบในที่เดียว</h2>
+        <p class="cyber-room-desc mb-0">เลือกวันเข้าพักจากแถบค้นหาด้านบน เลือกห้องและบริการเสริม แล้วชำระเงินด้วยเงินสด QR Code หรือบัตรเดบิต/เครดิต — ส่วนลดตามเงื่อนไขโปรโมชั่นคิดให้อัตโนมัติ</p>
+    </div>
+    <div class="col-lg-4 text-lg-end">
+        <a class="cyber-btn" asp-action="Rooms">ดูห้องพักทั้งหมด</a>
+    </div>
+</div>
+
+<div class="cyber-section-title">Featured Rooms</div>
+@if (!Model.Any())
+{
+    <div class="cyber-empty">ยังไม่มีห้องพักที่เปิดให้บริการในขณะนี้</div>
+}
+else
+{
+    <div class="row g-4 mb-5">
+        @foreach (var room in Model)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="cyber-room-card cyber-room-card--listing">
+                    <img src="@room.DisplayImageUrl" alt="@room.Name" loading="lazy" onerror="this.onerror=null;this.src='@HotelRoom.PlaceholderImageUrl';" />
+                    <div class="cyber-room-body">
+                        <span class="cyber-pill">@room.RoomType</span>
+                        <div class="cyber-room-name">@room.Name</div>
+                        <div class="cyber-room-meta">@room.BedType · รองรับ @room.Capacity คน@(room.HasSpa ? " · สปา" : "")</div>
+                        <div class="cyber-price">@DisplayText.Money(room.Price) <small>/ คืน</small></div>
+                        <div class="d-flex gap-2 cyber-room-actions mt-3">
+                            <a class="cyber-btn flex-fill" asp-action="RoomDetails" asp-route-id="@room.Id">รายละเอียด</a>
+                            <a class="cyber-btn-outline flex-fill" asp-action="Checkout" asp-route-roomId="@room.Id">จองเลย</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="cyber-section-title">Services · บริการ</div>
+        <ul class="cyber-feature-list">
+            <li>ห้องเตียงเดี่ยว / เตียงคู่ / สวีท</li>
+            <li>อาหารเช้า @DisplayText.Money(BookingOptions.BreakfastPerPersonPerNight) ต่อคนต่อคืน</li>
+            <li>เตียงเสริม @DisplayText.Money(BookingOptions.ExtraBedPerNight) ต่อคืน</li>
+            <li>สปา @DisplayText.Money(BookingOptions.SpaPerSession) ต่อครั้ง (ห้องที่มีบริการสปา)</li>
+            <li>ราคารวมภาษีมูลค่าเพิ่ม @DisplayText.Percent(BookingOptions.TaxPercent)</li>
+        </ul>
+    </div>
+    <div class="col-lg-6">
+        <div class="cyber-section-title">Promotions · โปรโมชั่น</div>
+        <ul class="cyber-feature-list">
+            @foreach (var rule in PriceCalculator.Rules)
+            {
+                <li>@rule.Title</li>
+            }
+        </ul>
+        <a class="cyber-btn-outline" asp-action="Promotions">ดูเงื่อนไขโปรโมชั่น</a>
+    </div>
+</div>

@@ -1,0 +1,113 @@
+@model HotelBooking
+@{
+    ViewData["Title"] = "การจอง #" + Model.Id;
+    var isPaid = Model.PaymentStatus == PaymentStatus.Paid;
+    var heading = Model.Status switch
+    {
+        BookingStatus.Cancelled => "การจองถูกยกเลิก",
+        BookingStatus.CheckedIn => "กำลังเข้าพัก — ขอให้มีความสุขกับการพักผ่อน",
+        BookingStatus.CheckedOut => "เข้าพักเรียบร้อยแล้ว ขอบคุณที่ใช้บริการ",
+        _ => isPaid ? "จองและชำระเงินเรียบร้อย" : "บันทึกการจองเรียบร้อย"
+    };
+}
+
+<ol class="cyber-steps" aria-label="ขั้นตอนการจอง">
+    <li class="done">1. รายละเอียดการจอง</li>
+    <li class="@(Model.PaymentMethod.Length > 0 ? "done" : "active")">2. ชำระเงิน</li>
+    <li class="@(Model.PaymentMethod.Length > 0 ? "active" : null)">3. เสร็จสิ้น</li>
+</ol>
+
+<div class="text-center py-3">
+    <div class="cyber-section-title">Reservation #@Model.Id · Royal Hotel</div>
+    <h2 class="cyber-heading text-brand mb-3">@heading</h2>
+    <p class="cyber-room-meta mx-auto mb-3" style="max-width: 700px;">
+        ห้อง <strong class="text-light-print">@Model.RoomName</strong> ·
+        อีเมลติดต่อ <strong class="text-light-print">@Model.ContactEmail</strong> ·
+        จองเมื่อ @DisplayText.Timestamp(Model.CreatedAt)
+    </p>
+    <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <span class="cyber-pill status-pill @BookingStatus.CssClass(Model.Status)">@BookingStatus.ThaiName(Model.Status)</span>
+        <span class="cyber-pill status-pill @PaymentStatus.CssClass(Model.PaymentStatus)">@PaymentStatus.ThaiName(Model.PaymentStatus)</span>
+    </div>
+    @if (Model.Status == BookingStatus.Cancelled && Model.CancelReason.Length > 0)
+    {
+        <p class="cyber-note mt-2 mb-0">@CancelReasons.ThaiName(Model.CancelReason)</p>
+    }
+</div>
+
+<div class="cyber-booking-box mx-auto" style="max-width: 760px;">
+    <div class="row g-3 text-start">
+        <div class="col-md-6">
+            <div class="cyber-section-title mb-1">Guest</div>
+            <div class="fw-bold">@Model.GuestName</div>
+        </div>
+        <div class="col-md-6">
+            <div class="cyber-section-title mb-1">Payment</div>
+            <div class="fw-bold">
+                @(Model.PaymentMethod.Length > 0 ? Model.PaymentMethod : Model.AwaitsPaymentChoice ? "ยังไม่เลือกวิธีชำระเงิน" : "ไม่ได้เลือกวิธีชำระเงิน")
+                @if (Model.PaymentReference.Length > 0)
+                {
+                    <span class="cyber-note">(@Model.PaymentReference)</span>
+                }
+            </div>
+            @if (Model.AwaitsPaymentChoice)
+            {
+                <div class="cyber-note mt-0 text-warning">เลือกวิธีชำระภายใน @DisplayText.Clock(Model.PaymentChoiceDeadline) น. ไม่เช่นนั้นระบบจะยกเลิกการจองอัตโนมัติ</div>
+            }
+            else if (Model.PaymentStatus == PaymentStatus.Pending)
+            {
+                <div class="cyber-note mt-0">รอเจ้าหน้าที่ตรวจสอบการโอนเงิน</div>
+            }
+            else if (Model.PaymentMethod == BookingOptions.Cash && Model.PaymentStatus == PaymentStatus.Unpaid)
+            {
+                <div class="cyber-note mt-0">ชำระเงินสดที่เคาน์เตอร์ในวันเช็คอิน</div>
+            }
+            else if (Model.PaidAt is { } paidAt && isPaid)
+            {
+                <div class="cyber-note mt-0">ชำระเมื่อ @DisplayText.Timestamp(paidAt)</div>
+            }
+        </div>
+        <div class="col-md-6">
+            <div class="cyber-section-title mb-1">Check-In / Check-Out</div>
+            <div class="fw-bold">@DisplayText.Date(Model.CheckIn) – @DisplayText.Date(Model.CheckOut)</div>
+        </div>
+        <div class="col-md-6">
+            <div class="cyber-section-title mb-1">Stay</div>
+            <div class="fw-bold">@Model.Nights คืน · @Model.Guests คน</div>
+            <div class="cyber-note mt-0">@Model.ServicesText</div>
+        </div>
+        @if (Model.SpecialRequest.Length > 0)
+        {
+            <div class="col-12">
+                <div class="cyber-section-title mb-1">Special Request · คำขอพิเศษ</div>
+                <div class="special-request">@Model.SpecialRequest</div>
+            </div>
+        }
+        <div class="col-12">
+            <partial name="_BookingBreakdown" model="Model" />
+        </div>
+    </div>
+
+    @if (Model.Status == BookingStatus.Confirmed)
+    {
+        <p class="cyber-note">ยกเลิกได้ที่หน้าประวัติการจองจนถึงวันเช็คอิน (ก่อนเช็คอิน) · หากชำระเงินแล้ว ฝ่ายการเงินจะคืนเงินเต็มจำนวน · ถ้าไม่มาเข้าพักโดยไม่ได้ยกเลิก จะไม่คืนเงิน</p>
+    }
+
+    <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap no-print">
+        @if (Model.CanPayOnline)
+        {
+            <a class="cyber-btn" asp-action="Payment" asp-route-id="@Model.Id">@(Model.PaymentMethod.Length > 0 ? "เปลี่ยนเป็นชำระออนไลน์" : "ไปหน้าชำระเงิน")</a>
+        }
+        @if (BookingReceipt.IsAvailable(Model))
+        {
+            <a class="cyber-btn" asp-action="Receipt" asp-route-id="@Model.Id">ใบเสร็จรับเงิน</a>
+        }
+        @if (ReviewRules.CanReview(Model))
+        {
+            <a class="cyber-btn-outline" asp-action="Review" asp-route-id="@Model.Id">รีวิวการเข้าพัก</a>
+        }
+        <button type="button" class="cyber-btn-outline" data-print>พิมพ์ใบยืนยันการจอง</button>
+        <a class="cyber-btn-outline" asp-action="BookingHistory">ประวัติการจอง</a>
+        <a class="cyber-btn-outline" asp-action="Rooms">จองห้องเพิ่ม</a>
+    </div>
+</div>

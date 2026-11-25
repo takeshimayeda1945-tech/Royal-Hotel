@@ -1,0 +1,17 @@
+@* Footer shared by both layouts. *@
+@inject RolePortals Portals
+@{
+    var isBackOffice = RolePortals.IsBackOffice(Portals.RoleOf(Context));
+}
+<footer class="cyber-footer">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+        <div>&copy; @DateTime.Today.Year <strong class="text-brand">Royal Hotel</strong> · royalhotel.com</div>
+        <div class="d-flex gap-3">
+            @if (!isBackOffice)
+            {
+                <a asp-area="" asp-controller="Home" asp-action="Promotions">Promotions</a>
+            }
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy Protocol</a>
+        </div>
+    </div>
+</footer>

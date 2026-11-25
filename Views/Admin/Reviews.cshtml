@@ -1,0 +1,123 @@
+@model ReviewAdminPageModel
+@{
+    ViewData["Title"] = "รีวิวจากผู้เข้าพัก";
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var filterValues = new Dictionary<string, string>();
+    if (Model.Show != null) filterValues["show"] = Model.Show;
+    if (Model.Stars != null) filterValues["stars"] = Model.Stars.Value.ToString(CultureInfo.InvariantCulture);
+    var tabs = new (string? Key, string Label)[] { (null, "ทั้งหมด"), ("visible", "แสดงอยู่"), ("hidden", "ซ่อนอยู่") };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title mb-1">Admin · Reviews</div>
+        <h2 class="cyber-heading mb-0">รีวิวจากผู้เข้าพัก</h2>
+    </div>
+    <a class="cyber-btn-outline" asp-action="AuditLog" asp-route-group="review">ประวัติการซ่อน/แสดงรีวิว</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="stat-tile">
+            <span>คะแนนเฉลี่ย (รีวิวที่แสดง)</span>
+            @if (Model.Overall is { } overall)
+            {
+                <strong>@overall.AverageText</strong>
+                <small><partial name="_Stars" model="overall.Average" /></small>
+            }
+            else
+            {
+                <strong>–</strong>
+            }
+        </div>
+    </div>
+    <div class="col-sm-4"><div class="stat-tile"><span>แสดงบนหน้าห้องพัก</span><strong>@Model.VisibleCount.ToString("N0", CultureInfo.InvariantCulture)</strong></div></div>
+    <div class="col-sm-4"><div class="stat-tile"><span>ซ่อนไว้</span><strong>@Model.HiddenCount.ToString("N0", CultureInfo.InvariantCulture)</strong><small>ไม่แสดงและไม่นับในคะแนนของห้อง</small></div></div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <nav class="cyber-tabs" aria-label="กรองรีวิว">
+        @foreach (var tab in tabs)
+        {
+            <a class="@(tab.Key == Model.Show ? "active" : null)" aria-current="@(tab.Key == Model.Show ? "page" : null)"
+               asp-action="Reviews" asp-route-show="@tab.Key" asp-route-stars="@Model.Stars">@tab.Label</a>
+        }
+    </nav>
+    <form asp-action="Reviews" method="get" class="d-flex gap-2 ms-auto">
+        @if (Model.Show != null)
+        {
+            <input type="hidden" name="show" value="@Model.Show" />
+        }
+        <select name="stars" class="form-select form-select-sm" aria-label="กรองตามดาว" onchange="this.form.requestSubmit()">
+            <option value="">ทุกคะแนน</option>
+            @for (var star = ReviewRules.MaxRating; star >= ReviewRules.MinRating; star--)
+            {
+                <option value="@star" selected="@(Model.Stars == star)">@star ดาว</option>
+            }
+        </select>
+        <noscript><button type="submit" class="btn btn-outline-info btn-sm">กรอง</button></noscript>
+    </form>
+</div>
+
+@if (!Model.Rows.Any())
+{
+    <div class="cyber-empty">ไม่มีรีวิวในมุมมองนี้</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-dark align-middle cyber-table">
+            <thead>
+                <tr>
+                    <th>รีวิว</th>
+                    <th>ห้อง / ผู้รีวิว</th>
+                    <th>ความคิดเห็น</th>
+                    <th class="text-end">ดำเนินการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    var r = row.Review;
+                    <tr class="@(r.IsHidden ? "row-muted" : null)">
+                        <td class="text-nowrap">
+                            <partial name="_Stars" model="(double)r.Rating" />
+                            <div class="cyber-note mt-1">#@r.Id · @DisplayText.Date(r.CreatedAt)</div>
+                            @if (r.IsHidden)
+                            {
+                                <span class="cyber-pill status-pill status-cancelled mt-1">ซ่อนอยู่</span>
+                            }
+                        </td>
+                        <td class="wrap-anywhere">
+                            @row.RoomName
+                            <div class="cyber-note mt-0">@r.ReviewerName · การจอง #@r.BookingId</div>
+                        </td>
+                        <td class="wrap-anywhere">
+                            @if (r.Comment.Length > 0)
+                            {
+                                <div class="review-comment review-comment--compact">@r.Comment</div>
+                            }
+                            else
+                            {
+                                <span class="cyber-note mt-0">(ให้คะแนนอย่างเดียว)</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (r.IsHidden)
+                            {
+                                <form asp-action="ShowReview" method="post"><input type="hidden" name="id" value="@r.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-success btn-sm">แสดงอีกครั้ง</button></form>
+                            }
+                            else
+                            {
+                                <form asp-action="HideReview" method="post" data-confirm="ซ่อนรีวิว #@r.Id ? (ไม่แสดงบนหน้าห้องพักและไม่นับคะแนน)"><input type="hidden" name="id" value="@r.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-outline-danger btn-sm">ซ่อน</button></form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    var pager = new PagerModel(Model.Paging, nameof(AdminController.Reviews), filterValues);
+    <partial name="_Pager" model="pager" />
+    <div class="cyber-note">ผู้เข้าพักรีวิวได้หลังเช็คเอาท์ (1 รีวิวต่อการเข้าพัก แก้ไขได้) · ซ่อนรีวิวที่ไม่สุภาพหรือเป็นโฆษณา ทุกครั้งที่ซ่อน/แสดงจะถูกบันทึกในบันทึกการกระทำ</div>
+}

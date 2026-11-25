@@ -1,0 +1,158 @@
+@model AuditLogPageModel
+@{
+    ViewData["Title"] = "บันทึกการกระทำ";
+    var filter = Model.Filter;
+    var isSuperAdmin = Context.Session.GetString(SessionKeys.UserRole) == UserRoles.SuperAdmin;
+    var person = filter.UserId is int uid ? Model.People.FirstOrDefault(p => p.Id == uid) : null;
+}
+@functions {
+    /// <summary>Where the record of a line can be opened (null when there is no page for it).</summary>
+    private string? RecordUrl(AuditLog line, bool isSuperAdmin) => line.EntityId is not int id ? null : line.EntityType switch
+    {
+        AuditEntities.Booking => Url.Action("Bookings", "Staff", new { view = "all", q = id }),
+        AuditEntities.Room when line.Action != AuditActions.RoomDeleted => Url.Action("Rooms", "SuperAdmin", new { editId = id }),
+        AuditEntities.User when isSuperAdmin && line.Action != AuditActions.UserDeleted => Url.Action("UserList", "SuperAdmin", new { editId = id }),
+        AuditEntities.Review => Url.Action("Reviews", "Admin"),
+        _ => null
+    };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title mb-1">Admin · Audit Log</div>
+        <h2 class="cyber-heading mb-0">บันทึกการกระทำ</h2>
+    </div>
+    <div class="cyber-note mt-0 text-end">
+        วันนี้ <strong>@Model.TodayCount.ToString("N0", CultureInfo.InvariantCulture)</strong> รายการ ·
+        ทั้งหมด @Model.TotalCount.ToString("N0", CultureInfo.InvariantCulture) รายการ
+    </div>
+</div>
+
+<form asp-action="AuditLog" method="get" class="cyber-booking-box room-filter mb-3" aria-label="กรองบันทึกการกระทำ">
+    @if (filter.Entity != null)
+    {
+        <input type="hidden" name="entity" value="@filter.Entity" />
+        <input type="hidden" name="id" value="@filter.Id" />
+    }
+    <div class="row g-2 align-items-end">
+        <div class="col-sm-6 col-xl-3">
+            <label class="form-label" for="audit-group">ประเภท</label>
+            <select id="audit-group" name="group" class="form-select form-select-sm">
+                <option value="">ทุกประเภท</option>
+                @foreach (var group in AuditActions.Groups)
+                {
+                    <option value="@group.Key" selected="@(group.Key == filter.Group)">@group.Label</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <label class="form-label" for="audit-user">ผู้ทำ</label>
+            <select id="audit-user" name="userId" class="form-select form-select-sm">
+                <option value="">ทุกคน</option>
+                @foreach (var p in Model.People)
+                {
+                    <option value="@p.Id" selected="@(p.Id == filter.UserId)">@p.Name (@UserRoles.ThaiName(p.Role))</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-xl-2">
+            <label class="form-label" for="audit-from">ตั้งแต่วันที่</label>
+            <input id="audit-from" type="date" name="from" value="@filter.From" class="form-control form-control-sm" />
+        </div>
+        <div class="col-6 col-xl-2">
+            <label class="form-label" for="audit-to">ถึงวันที่</label>
+            <input id="audit-to" type="date" name="to" value="@filter.To" class="form-control form-control-sm" />
+        </div>
+        <div class="col-sm-8 col-xl-2">
+            <label class="form-label" for="audit-q">ค้นหา</label>
+            <input id="audit-q" type="search" name="q" value="@filter.Q" maxlength="100" class="form-control form-control-sm" placeholder="#เลขที่ / ชื่อ / คำ" />
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+        <button type="submit" class="cyber-btn-outline room-filter-button">กรอง</button>
+        @if (!filter.IsEmpty)
+        {
+            <a class="cyber-btn-outline room-filter-button" asp-action="AuditLog">ล้างตัวกรอง</a>
+        }
+        @if (filter.Entity != null)
+        {
+            <span class="cyber-note mt-0">
+                แสดงเฉพาะประวัติของ <strong>@AuditEntities.ThaiName(filter.Entity) @(filter.Id is int eid ? $"#{eid}" : "")</strong>
+            </span>
+        }
+        @if (person != null)
+        {
+            <a class="cyber-note mt-0" asp-action="AuditLog" asp-route-entity="@AuditEntities.User" asp-route-id="@person.Id">ดูประวัติการแก้ไขบัญชีของ @person.Name</a>
+        }
+    </div>
+</form>
+
+@if (!Model.Lines.Any())
+{
+    <div class="cyber-empty">
+        @(filter.IsEmpty ? "ยังไม่มีบันทึก — ทุกการกระทำของพนักงาน ฝ่ายการเงิน และผู้ดูแลระบบจะถูกบันทึกที่นี่" : "ไม่มีบันทึกที่ตรงกับตัวกรอง")
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-dark align-middle cyber-table audit-table">
+            <thead>
+                <tr>
+                    <th>เวลา</th>
+                    <th>ผู้ทำ</th>
+                    <th>การกระทำ</th>
+                    <th>รายละเอียด</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var line in Model.Lines)
+                {
+                    var recordUrl = RecordUrl(line, isSuperAdmin);
+                    <tr>
+                        <td class="text-nowrap">
+                            @DisplayText.Date(line.CreatedAt)
+                            <div class="cyber-note mt-0">@line.CreatedAt.ToString("HH:mm:ss", CultureInfo.InvariantCulture)</div>
+                        </td>
+                        <td class="wrap-anywhere">
+                            @if (line.UserId is int actorId)
+                            {
+                                <a asp-action="AuditLog" asp-route-userId="@actorId" title="ดูทุกอย่างที่คนนี้ทำ">@line.UserName</a>
+                            }
+                            else
+                            {
+                                @line.UserName
+                            }
+                            <div class="cyber-note mt-0">@(line.UserRole == AuditLog.SystemRole ? "ระบบ" : UserRoles.ThaiName(line.UserRole))@(line.IpAddress.Length > 0 ? " · " + line.IpAddress : "")</div>
+                        </td>
+                        <td>
+                            <span class="cyber-pill status-pill @AuditActions.CssClass(line.Action)">@AuditActions.ThaiName(line.Action)</span>
+                            <div class="cyber-note mt-1 text-nowrap">
+                                @AuditEntities.ThaiName(line.EntityType)
+                                @if (line.EntityId is int entityId)
+                                {
+                                    if (recordUrl != null)
+                                    {
+                                        <a href="@recordUrl">#@entityId</a>
+                                    }
+                                    else
+                                    {
+                                        <text>#@entityId</text>
+                                    }
+                                    <a asp-action="AuditLog" asp-route-entity="@line.EntityType" asp-route-id="@entityId" title="ประวัติทั้งหมดของรายการนี้">· ประวัติ</a>
+                                }
+                            </div>
+                        </td>
+                        <td class="wrap-anywhere audit-details">@line.Details</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    var pager = new PagerModel(Model.Paging, "AuditLog", filter.RouteValues());
+    <partial name="_Pager" model="pager" />
+}
+<div class="cyber-note">
+    บันทึกทุกการเปลี่ยนแปลงของหลังบ้าน (การชำระเงิน เช็คอิน/เอาท์ การยกเลิก การคืนเงิน ห้องพัก ผู้ใช้ เวร รีวิว) และการยกเลิกอัตโนมัติของระบบ
+    · เพิ่มได้อย่างเดียว ไม่มีใครแก้หรือลบผ่านหน้าเว็บได้ · ไม่เคยบันทึกรหัสผ่านหรือเลขบัตร
+</div>

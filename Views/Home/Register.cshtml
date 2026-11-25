@@ -1,0 +1,84 @@
+@model RegisterViewModel
+@{
+    Layout = null;
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>สมัครสมาชิก - Royal Hotel</title>
+    <link rel="icon" href="~/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+</head>
+<body>
+<div class="cyber-wrapper">
+    <div class="cyber-visual">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+        <div class="visual-content">
+            <div class="brand-tag">// ROYAL HOTEL</div>
+            <h1 class="visual-title">Join<span>.</span><br>The<br>Club</h1>
+            <p class="visual-sub">Members get birthday &amp; early-bird deals</p>
+        </div>
+    </div>
+
+    <main class="cyber-login">
+        <div class="login-card">
+            <a class="auth-back" asp-controller="Home" asp-action="Index">&larr; กลับหน้าหลัก Royal Hotel</a>
+            <h2 class="login-title">Reg<span class="accent">//</span>ister</h2>
+            <p class="login-sub">สมัครสมาชิก Royal Hotel</p>
+
+            <form asp-controller="Home" asp-action="Register" asp-route-returnUrl="@returnUrl" method="post">
+                <div asp-validation-summary="ModelOnly" role="alert"></div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Name">Name · ชื่อ-นามสกุล</label>
+                    <input type="text" class="form-control" placeholder="ชื่อ นามสกุล" asp-for="Name" maxlength="100" autocomplete="name" required />
+                    <span asp-validation-for="Name" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Email">Email · อีเมล</label>
+                    <input type="email" class="form-control" placeholder="you@example.com" asp-for="Email" maxlength="200" autocomplete="email" required />
+                    <span asp-validation-for="Email" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="PhoneNumber">Phone · เบอร์โทร</label>
+                    <input type="tel" class="form-control" placeholder="08X-XXX-XXXX" asp-for="PhoneNumber" maxlength="50" autocomplete="tel" required />
+                    <span asp-validation-for="PhoneNumber" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Birthday">Birthday · วันเกิด</label>
+                    <input type="date" class="form-control" asp-for="Birthday" min="@DateInput.ToValue(AccountRules.MinBirthday)" max="@DateInput.ToValue(DateTime.Today)" autocomplete="bday" required />
+                    <div class="field-hint">ใช้รับส่วนลดเดือนเกิด 10% — แก้ไขภายหลังไม่ได้</div>
+                    <span asp-validation-for="Birthday" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Password">Password · รหัสผ่าน</label>
+                    <div class="password-field">
+                        <input type="password" class="form-control" placeholder="อย่างน้อย @AccountRules.MinPasswordLength ตัวอักษร" asp-for="Password" minlength="@AccountRules.MinPasswordLength" maxlength="@AccountRules.MaxPasswordLength" autocomplete="new-password" required />
+                        <button type="button" class="password-toggle" data-toggle-password="#Password" aria-pressed="false" aria-label="แสดงหรือซ่อนรหัสผ่าน">แสดง</button>
+                    </div>
+                    <span asp-validation-for="Password" class="field-error"></span>
+                </div>
+
+                <button type="submit" class="btn-login">Sign Up</button>
+            </form>
+
+            <div class="login-footer">
+                มีบัญชีอยู่แล้ว? <a asp-controller="Home" asp-action="Login" asp-route-returnUrl="@returnUrl">Log In</a>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+@model IEnumerable<CyberUser>
+@{
+    ViewData["Title"] = "จัดการผู้ใช้";
+    var editUser = ViewBag.EditUser as UserFormModel;
+    var currentUserId = ViewBag.CurrentUserId as int?;
+    var roleFilter = ViewBag.RoleFilter as string;
+    var query = ViewBag.Query as string ?? string.Empty;
+
+    var allUsers = Model.ToList();
+    var users = allUsers
+        .Where(u => roleFilter == null || u.Role == roleFilter)
+        .Where(u => query.Length == 0 ||
+                    u.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                    u.Email.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                    u.PhoneNumber.Contains(query, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    string RoleClass(string role) => role switch
+    {
+        UserRoles.SuperAdmin => "status-cancelled",
+        UserRoles.Admin => "status-warning",
+        UserRoles.Staff or UserRoles.Housekeeper => "status-info",
+        UserRoles.Finance => "status-confirmed",
+        _ => "status-completed"
+    };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title">User Management</div>
+        <h2 class="cyber-heading mb-0">จัดการผู้ใช้</h2>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="AddUser" class="cyber-btn">+ เพิ่มผู้ใช้</a>
+        <a asp-controller="Admin" asp-action="Dashboard" class="cyber-btn-outline">Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    @foreach (var role in UserRoles.All)
+    {
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="stat-tile">
+                <span>@UserRoles.ThaiName(role)</span>
+                <strong>@allUsers.Count(u => u.Role == role)</strong>
+            </div>
+        </div>
+    }
+</div>
+
+@if (editUser != null)
+{
+    var isSelf = editUser.Id == currentUserId;
+    <div class="cyber-booking-box mb-4" id="user-form">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div class="cyber-section-title mb-0">แก้ไขผู้ใช้ #@editUser.Id@(isSelf ? " (บัญชีของคุณ)" : "")</div>
+            <a class="cyber-back-link" asp-action="UserList" asp-route-role="@roleFilter" asp-route-q="@query">ปิด ✕</a>
+        </div>
+        <form asp-action="UpdateUser" method="post">
+            <input type="hidden" name="Id" value="@editUser.Id" />
+            <div asp-validation-summary="All" class="cyber-validation-summary"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="Name">ชื่อ</label>
+                    <input id="Name" name="Name" class="form-control" value="@editUser.Name" maxlength="100" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="Email">อีเมล</label>
+                    <input id="Email" name="Email" type="email" class="form-control" value="@editUser.Email" maxlength="200" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="PhoneNumber">เบอร์โทร</label>
+                    <input id="PhoneNumber" name="PhoneNumber" type="tel" class="form-control" value="@editUser.PhoneNumber" maxlength="50" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="Birthday">วันเกิด</label>
+                    <input id="Birthday" name="Birthday" type="date" class="form-control" value="@(editUser.Birthday is DateTime birthday ? DateInput.ToValue(birthday) : null)" min="@DateInput.ToValue(AccountRules.MinBirthday)" max="@DateInput.ToValue(DateTime.Today)" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="Role">บทบาท</label>
+                    <select id="Role" name="Role" class="form-select" required>
+                        @foreach (var role in UserRoles.All)
+                        {
+                            <option value="@role" selected="@(editUser.Role == role)">@role · @UserRoles.ThaiName(role)</option>
+                        }
+                    </select>
+                    @if (isSelf)
+                    {
+                        <div class="form-text">ไม่สามารถเอาสิทธิ์ Super Admin ออกจากบัญชีของตัวเองได้</div>
+                    }
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label" for="Password">รหัสผ่านใหม่</label>
+                    <input id="Password" name="Password" type="password" class="form-control" minlength="@AccountRules.MinPasswordLength" maxlength="@AccountRules.MaxPasswordLength" autocomplete="new-password" placeholder="เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยนรหัสผ่าน" />
+                    <div class="form-text">ตั้งรหัสผ่านใหม่ได้ (อย่างน้อย @AccountRules.MinPasswordLength ตัวอักษร) — รหัสผ่านเดิมดูไม่ได้เพราะเก็บแบบ hash</div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="submit" class="cyber-btn flex-fill">บันทึกการแก้ไข</button>
+                    <a class="cyber-btn-outline" asp-action="UserList" asp-route-role="@roleFilter" asp-route-q="@query">ยกเลิก</a>
+                </div>
+            </div>
+        </form>
+    </div>
+}
+
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <nav class="cyber-tabs" aria-label="กรองตามบทบาท">
+        <a class="@(roleFilter == null ? "active" : null)" aria-current="@(roleFilter == null ? "page" : null)" asp-action="UserList" asp-route-q="@query">ทั้งหมด (@allUsers.Count)</a>
+        @foreach (var role in UserRoles.All)
+        {
+            <a class="@(roleFilter == role ? "active" : null)" aria-current="@(roleFilter == role ? "page" : null)" asp-action="UserList" asp-route-role="@role" asp-route-q="@query">@role</a>
+        }
+    </nav>
+    <form asp-action="UserList" method="get" class="d-flex gap-2 ms-auto" role="search">
+        @if (roleFilter != null)
+        {
+            <input type="hidden" name="role" value="@roleFilter" />
+        }
+        <input type="search" name="q" value="@query" class="form-control form-control-sm" placeholder="ชื่อ / อีเมล / เบอร์โทร" aria-label="ค้นหาผู้ใช้" maxlength="100" />
+        <button type="submit" class="btn btn-outline-info btn-sm">ค้นหา</button>
+    </form>
+</div>
+
+@if (!users.Any())
+{
+    <div class="cyber-empty">
+        ไม่พบผู้ใช้ตามเงื่อนไขนี้
+        @if (roleFilter != null || query.Length > 0)
+        {
+            <text> — </text><a asp-action="UserList">ดูผู้ใช้ทั้งหมด</a>
+        }
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-dark align-middle cyber-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ชื่อ / อีเมล</th>
+                    <th>บทบาท</th>
+                    <th>เบอร์โทร / วันเกิด</th>
+                    <th class="text-end">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in users)
+                {
+                    var isCurrentUser = user.Id == currentUserId;
+                    <tr class="@(user.Id == editUser?.Id ? "table-active" : null)">
+                        <td>#@user.Id</td>
+                        <td class="wrap-anywhere">
+                            @user.Name
+                            @if (isCurrentUser)
+                            {
+                                <span class="cyber-pill status-pill status-warning ms-1">คุณ</span>
+                            }
+                            <div class="cyber-note mt-0">@user.Email</div>
+                        </td>
+                        <td>
+                            <span class="cyber-pill status-pill @RoleClass(user.Role)">@user.Role</span>
+                            <div class="cyber-note mt-1">@UserRoles.ThaiName(user.Role)</div>
+                        </td>
+                        <td class="text-nowrap">
+                            @user.PhoneNumber
+                            <div class="cyber-note mt-0">เกิด @DisplayText.Date(user.Birthday)</div>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-outline-info btn-sm" asp-action="UserList" asp-route-editId="@user.Id" asp-route-role="@roleFilter" asp-route-q="@query" asp-fragment="user-form">แก้ไข</a>
+                            <a class="btn btn-outline-secondary btn-sm ms-1" asp-controller="Admin" asp-action="AuditLog" asp-route-entity="@AuditEntities.User" asp-route-id="@user.Id" title="การเปลี่ยนแปลงของบัญชีนี้">ประวัติ</a>
+                            @if (!isCurrentUser)
+                            {
+                                <form asp-action="DeleteUser" method="post" class="d-inline ms-1" data-confirm="ลบผู้ใช้ &quot;@user.Name&quot; (@user.Email) ?">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">ลบ</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="cyber-note">แสดง @users.Count จาก @allUsers.Count บัญชี · ลบบัญชีที่กำลังใช้งานอยู่ไม่ได้</div>
+}

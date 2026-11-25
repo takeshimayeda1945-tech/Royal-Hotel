@@ -1,0 +1,126 @@
+@inject RolePortals Portals
+@{
+    // Layout for signed-in users (every role, see _ViewStart.cshtml): same header and footer as
+    // _Layout plus a menu next to the content with the pages of the user's role.
+    var currentUserName = Context.Session.GetString(SessionKeys.UserName) ?? "Guest";
+    var currentUserRole = Context.Session.GetString(SessionKeys.UserRole) ?? UserRoles.Customer;
+    var isSuperAdmin = currentUserRole == UserRoles.SuperAdmin;
+    // Back-office ports (front desk, housekeeping, finance, admin) show only the role's own pages.
+    var isBackOffice = RolePortals.IsBackOffice(Portals.RoleOf(Context));
+    // The banner with the room search is for browsing rooms; booking, paying and the back office skip it.
+    var showBanner = !isBackOffice && ViewContext.IsActive("Home", "Index", "Rooms", "RoomDetails", "Promotions");
+    string[] roomPages = { "Rooms", "RoomDetails", "Checkout", "Payment", "BookingSuccess" };
+}
+<!DOCTYPE html>
+<html lang="th" data-bs-theme="dark">
+<head>
+    <partial name="_SiteHead" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <partial name="_SiteHeader" />
+
+    @if (showBanner)
+    {
+        <partial name="_SiteBanner" />
+    }
+
+    <div class="container flex-grow-1 py-4">
+        <div class="row g-4">
+            <aside class="col-lg-3">
+                @* On phones the menu folds away behind this button, so the page content comes first. *@
+                <button class="cyber-sidebar-toggle d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-expanded="false" aria-controls="sidebarMenu">
+                    <span aria-hidden="true">☰</span> เมนู · @UserRoles.ThaiName(currentUserRole)
+                </button>
+                <nav id="sidebarMenu" class="cyber-sidebar collapse d-lg-block" aria-label="เมนูของบัญชี">
+                    <div class="cyber-sidebar-user">
+                        <span class="avatar" aria-hidden="true">@ViewHelpers.Initial(currentUserName)</span>
+                        <div>
+                            <div class="name">@currentUserName</div>
+                            <div class="role">@currentUserRole · @UserRoles.ThaiName(currentUserRole)</div>
+                        </div>
+                    </div>
+
+                    @if (!isBackOffice)
+                    {
+                        <div class="cyber-sidebar-title">Menu</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Home", "Index")" asp-area="" asp-controller="Home" asp-action="Index">&gt;&nbsp;Home</a></li>
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Home", roomPages)" asp-area="" asp-controller="Home" asp-action="Rooms">&gt;&nbsp;ห้องพัก</a></li>
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Home", "Promotions")" asp-area="" asp-controller="Home" asp-action="Promotions">&gt;&nbsp;โปรโมชั่น</a></li>
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Home", "BookingHistory", "Receipt", "Review")" asp-area="" asp-controller="Home" asp-action="BookingHistory">&gt;&nbsp;ประวัติการจอง</a></li>
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Account")" asp-area="" asp-controller="Account" asp-action="Index">&gt;&nbsp;บัญชีของฉัน</a></li>
+                        </ul>
+                    }
+
+                    @if (UserRoles.IsIn(currentUserRole, UserRoles.BookingManagers) || UserRoles.IsIn(currentUserRole, UserRoles.FinanceTeam))
+                    {
+                        var frontDeskTitle = (UserRoles.IsIn(currentUserRole, UserRoles.BookingManagers), UserRoles.IsIn(currentUserRole, UserRoles.FinanceTeam)) switch
+                        {
+                            (true, true) => "Front Desk / Finance",
+                            (true, false) => "Front Desk",
+                            _ => "Finance"
+                        };
+                        <div class="cyber-sidebar-title">@frontDeskTitle</div>
+                        <ul class="nav flex-column">
+                            @if (UserRoles.IsIn(currentUserRole, UserRoles.BookingManagers))
+                            {
+                                <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Staff", "Bookings")" asp-area="" asp-controller="Staff" asp-action="Bookings">&gt;&nbsp;จัดการการจอง</a></li>
+                                <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Staff", "WalkIn")" asp-area="" asp-controller="Staff" asp-action="WalkIn">&gt;&nbsp;จองให้แขก walk-in</a></li>
+                            }
+                            @if (UserRoles.IsIn(currentUserRole, UserRoles.FinanceTeam))
+                            {
+                                <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Finance", "Index")" asp-area="" asp-controller="Finance" asp-action="Index">&gt;&nbsp;การเงิน</a></li>
+                            }
+                        </ul>
+                    }
+
+                    @if (UserRoles.IsIn(currentUserRole, UserRoles.HousekeepingTeam))
+                    {
+                        <div class="cyber-sidebar-title">Housekeeping</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Housekeeping", "Index")" asp-area="" asp-controller="Housekeeping" asp-action="Index">&gt;&nbsp;ห้องที่ต้องทำความสะอาด</a></li>
+                        </ul>
+                    }
+
+                    @if (UserRoles.IsIn(currentUserRole, UserRoles.Managers))
+                    {
+                        <div class="cyber-sidebar-title">Admin</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Admin", "Dashboard")" asp-area="" asp-controller="Admin" asp-action="Dashboard">&gt;&nbsp;Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("SuperAdmin", "Rooms", "SaveRoom")" asp-area="" asp-controller="SuperAdmin" asp-action="Rooms">&gt;&nbsp;ห้องพักและราคา</a></li>
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Admin", "Shifts")" asp-area="" asp-controller="Admin" asp-action="Shifts">&gt;&nbsp;ตารางเวรแม่บ้าน</a></li>
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Admin", "Reviews")" asp-area="" asp-controller="Admin" asp-action="Reviews">&gt;&nbsp;รีวิวจากผู้เข้าพัก</a></li>
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Admin", "AuditLog")" asp-area="" asp-controller="Admin" asp-action="AuditLog">&gt;&nbsp;บันทึกการกระทำ</a></li>
+                            @if (isSuperAdmin)
+                            {
+                                <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("SuperAdmin", "UserList", "AddUser", "UpdateUser")" asp-area="" asp-controller="SuperAdmin" asp-action="UserList">&gt;&nbsp;จัดการผู้ใช้</a></li>
+                            }
+                        </ul>
+                    }
+
+                    @if (isBackOffice)
+                    {
+                        <div class="cyber-sidebar-title">Account</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link cyber-nav-link @ViewContext.ActiveClass("Account")" asp-area="" asp-controller="Account" asp-action="Index">&gt;&nbsp;บัญชีของฉัน</a></li>
+                        </ul>
+                    }
+                </nav>
+            </aside>
+
+            <main id="main-content" role="main" class="col-lg-9" tabindex="-1">
+                <div class="cyber-panel">
+                    <partial name="_StatusMessages" />
+                    @RenderBody()
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <partial name="_SiteFooter" />
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

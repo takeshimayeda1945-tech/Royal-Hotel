@@ -1,0 +1,5 @@
+﻿@{
+    // Visitors who are not signed in get the hotel layout; signed-in users get Layout 2.
+    var currentRole = Context.Session.GetString(SessionKeys.UserRole);
+    Layout = string.IsNullOrWhiteSpace(currentRole) ? "_Layout" : "_Layout2";
+}

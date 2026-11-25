@@ -1,0 +1,146 @@
+@model PaymentModel
+@{
+    ViewData["Title"] = "ชำระเงิน";
+    var booking = Model.Booking;
+}
+
+<ol class="cyber-steps" aria-label="ขั้นตอนการจอง">
+    <li class="done">1. รายละเอียดการจอง</li>
+    <li class="active">2. ชำระเงิน</li>
+    <li>3. เสร็จสิ้น</li>
+</ol>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="cyber-section-title">Payment · หน้าจ่ายเงิน</div>
+        <h2 class="cyber-heading mb-3">การจอง #@booking.Id</h2>
+
+        @if (booking.AwaitsPaymentChoice)
+        {
+            var secondsLeft = Math.Max(0, (int)(booking.PaymentChoiceDeadline - DateTime.Now).TotalSeconds);
+            <div class="cyber-alert cyber-alert-warning" role="status">
+                กรุณาเลือกวิธีชำระเงินภายใน <strong>@DisplayText.Clock(booking.PaymentChoiceDeadline) น.</strong>
+                (เหลือ <strong data-countdown="@secondsLeft">@(secondsLeft / 60) นาที</strong>)
+                ถ้าไม่เลือก ระบบจะยกเลิกการจองนี้อัตโนมัติเพื่อคืนห้องให้ผู้อื่น · เลือก "@BookingOptions.Cash" เพื่อชำระที่เคาน์เตอร์ในวันเช็คอินก็ได้
+            </div>
+        }
+
+        <form id="payment-form" asp-action="Payment" method="post" autocomplete="off">
+            <input type="hidden" asp-for="BookingId" />
+            <div asp-validation-summary="All" class="cyber-validation-summary"></div>
+
+            <div class="pay-methods" role="radiogroup" aria-label="วิธีชำระเงิน">
+                @foreach (var method in BookingOptions.PaymentMethods)
+                {
+                    var id = "pay-" + Array.IndexOf(BookingOptions.PaymentMethods, method);
+                    <input type="radio" class="btn-check" name="PaymentMethod" id="@id" value="@method" checked="@(Model.PaymentMethod == method)" />
+                    <label class="pay-method" for="@id">@method</label>
+                }
+            </div>
+
+            <div class="cyber-booking-box mt-3" data-pay-panel="@BookingOptions.Cash">
+                <p class="mb-1">ชำระเงินสดที่เคาน์เตอร์ต้อนรับในวันเช็คอิน</p>
+                <div class="cyber-note mt-0">การจองจะอยู่ในสถานะ "ยังไม่ชำระ" จนกว่าพนักงานจะรับเงิน · เปลี่ยนมาชำระออนไลน์ภายหลังได้จากหน้าประวัติการจอง</div>
+            </div>
+
+            <div class="cyber-booking-box mt-3" data-pay-panel="@BookingOptions.QrCode">
+                <div class="d-flex flex-wrap gap-3 align-items-start">
+                    <div class="pay-qr">@Html.Raw(DemoQr.Svg($"ROYALHOTEL|{booking.Id}|{booking.Total}"))</div>
+                    <div class="flex-fill">
+                        <p class="mb-1">สแกนเพื่อโอนเงิน <strong class="text-warning">@DisplayText.Money(booking.Total)</strong></p>
+                        <div class="cyber-note mt-0 mb-2">QR ตัวอย่างสำหรับการสาธิตเท่านั้น (ไม่ใช่ PromptPay จริง) · หลังโอนแล้วกรอกเลขที่อ้างอิงเพื่อให้เจ้าหน้าที่ตรวจสอบ</div>
+                        <label asp-for="TransferReference" class="form-label">เลขที่อ้างอิงการโอน</label>
+                        <input asp-for="TransferReference" class="form-control" maxlength="50" placeholder="เช่น 2026112212345" />
+                        <span asp-validation-for="TransferReference" class="field-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cyber-booking-box mt-3" data-pay-panel="@string.Join("|", BookingOptions.CardPaymentMethods)">
+                <div class="cyber-note mt-0 mb-2">การชำระด้วยบัตรเป็นการจำลอง ระบบตรวจรูปแบบข้อมูล (รวมถึงเลขตรวจสอบของหมายเลขบัตร) และบันทึกเฉพาะเลข 4 หลักท้าย · ทดลองได้ด้วยเลขบัตร 4111 1111 1111 1111</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="CardName" class="form-label">ชื่อบนบัตร</label>
+                        <input asp-for="CardName" class="form-control" maxlength="100" autocomplete="cc-name" />
+                        <span asp-validation-for="CardName" class="field-error"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="CardNumber" class="form-label">หมายเลขบัตร</label>
+                        <input asp-for="CardNumber" class="form-control" inputmode="numeric" maxlength="23" placeholder="XXXX XXXX XXXX XXXX" autocomplete="cc-number" />
+                        <span asp-validation-for="CardNumber" class="field-error"></span>
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="CardExpiry" class="form-label">วันหมดอายุ</label>
+                        <input asp-for="CardExpiry" class="form-control" maxlength="5" placeholder="MM/YY" autocomplete="cc-exp" />
+                        <span asp-validation-for="CardExpiry" class="field-error"></span>
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="CardCvv" class="form-label">CVV</label>
+                        <input asp-for="CardCvv" type="password" class="form-control" inputmode="numeric" maxlength="4" autocomplete="cc-csc" />
+                        <span asp-validation-for="CardCvv" class="field-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="cyber-btn w-100 mt-4">ยืนยันการชำระเงิน @DisplayText.Money(booking.Total)</button>
+            <div class="cyber-note text-center">ยกเลิกได้จนถึงวันเช็คอิน (ก่อนเช็คอิน) และได้เงินคืนเต็มจำนวน · ถ้าไม่มาเข้าพักโดยไม่ได้ยกเลิก จะไม่คืนเงิน</div>
+        </form>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="cyber-room-card">
+            <div class="cyber-room-body">
+                <div class="cyber-room-name">@booking.RoomName</div>
+                <div class="cyber-room-meta">
+                    @DisplayText.Date(booking.CheckIn) – @DisplayText.Date(booking.CheckOut) · @booking.Nights คืน · @booking.Guests คน<br />
+                    @booking.ServicesText
+                </div>
+                <partial name="_BookingBreakdown" model="booking" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Show only the panel of the selected payment method and disable the hidden inputs.
+        (() => {
+            const form = document.getElementById('payment-form');
+            const panels = form.querySelectorAll('[data-pay-panel]');
+
+            function update() {
+                const selected = form.querySelector('input[name="PaymentMethod"]:checked')?.value;
+                panels.forEach((panel) => {
+                    const show = panel.dataset.payPanel.split('|').includes(selected);
+                    panel.hidden = !show;
+                    panel.querySelectorAll('input').forEach((input) => { input.disabled = !show; });
+                });
+            }
+
+            form.addEventListener('change', update);
+            update();
+        })();
+
+        // Time left to choose a payment method, counted from when the page loaded (so a wrong clock
+        // on the visitor's computer does not matter). The server checks the deadline again on submit.
+        (() => {
+            const countdown = document.querySelector('[data-countdown]');
+            if (!countdown) {
+                return;
+            }
+
+            const end = Date.now() + Number(countdown.dataset.countdown) * 1000;
+            function tick() {
+                const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+                countdown.textContent = left > 0
+                    ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} นาที`
+                    : 'หมดเวลาแล้ว';
+                if (left > 0) {
+                    setTimeout(tick, 1000);
+                }
+            }
+
+            tick();
+        })();
+    </script>
+}

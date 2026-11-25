@@ -1,0 +1,70 @@
+@model ReviewPageModel
+@{
+    var booking = Model.Booking;
+    var isEdit = Model.Existing != null;
+    ViewData["Title"] = (isEdit ? "แก้ไขรีวิว " : "รีวิว ") + booking.RoomName;
+    var shownName = Model.Existing?.ReviewerName ?? ReviewRules.ShortName(Context.Session.GetString(SessionKeys.UserName) ?? string.Empty);
+}
+
+<div class="mb-3">
+    <a class="cyber-back-link" asp-action="BookingHistory">&larr; กลับไปประวัติการจอง</a>
+</div>
+
+<div class="cyber-section-title">Review · รีวิวการเข้าพัก</div>
+<h2 class="cyber-heading mb-2">@booking.RoomName</h2>
+<p class="cyber-room-meta">
+    การจอง #@booking.Id · @DisplayText.Date(booking.CheckIn) – @DisplayText.Date(booking.CheckOut) · @booking.Nights คืน · @booking.Guests คน
+</p>
+
+@if (Model.Existing?.IsHidden == true)
+{
+    <div class="cyber-alert cyber-alert-info" role="status">ผู้ดูแลระบบซ่อนรีวิวนี้ไว้ จึงไม่แสดงบนหน้าห้องพัก (แก้ไขได้ แต่ยังคงถูกซ่อน)</div>
+}
+
+<form asp-action="Review" method="post" class="cyber-booking-box review-form" style="max-width: 720px;">
+    @* The form posts a ReviewFormModel (BookingId, Rating, Comment), so plain names are used, not asp-for="Form.…". *@
+    <input type="hidden" name="BookingId" value="@Model.Form.BookingId" />
+    <div asp-validation-summary="ModelOnly" class="cyber-validation-summary"></div>
+
+    <fieldset>
+        <legend class="form-label">ให้คะแนนการเข้าพักครั้งนี้</legend>
+        <div class="star-input">
+            @for (var star = ReviewRules.MaxRating; star >= ReviewRules.MinRating; star--)
+            {
+                <input type="radio" id="rating-@star" name="Rating" value="@star" checked="@(Model.Form.Rating == star)" required />
+                <label for="rating-@star" title="@star ดาว — @ReviewRules.RatingLabel(star)">★<span class="visually-hidden">@star ดาว (@ReviewRules.RatingLabel(star))</span></label>
+            }
+        </div>
+        <div class="cyber-note mt-1" id="rating-text" aria-live="polite">@(Model.Form.Rating > 0 ? $"{Model.Form.Rating} ดาว — {ReviewRules.RatingLabel(Model.Form.Rating)}" : "เลือก 1–5 ดาว")</div>
+        @if (ViewData.ModelState["Rating"]?.Errors.FirstOrDefault() is { } ratingError)
+        {
+            <span class="field-error">@ratingError.ErrorMessage</span>
+        }
+    </fieldset>
+
+    <div class="mt-3">
+        <label for="Comment" class="form-label">ความคิดเห็น (ไม่บังคับ)</label>
+        <textarea id="Comment" name="Comment" class="form-control" rows="5" maxlength="@ReviewRules.MaxCommentLength"
+                  placeholder="เล่าประสบการณ์การเข้าพัก เช่น ความสะอาด การบริการ อาหารเช้า">@Model.Form.Comment</textarea>
+        @if (ViewData.ModelState["Comment"]?.Errors.FirstOrDefault() is { } commentError)
+        {
+            <span class="field-error">@commentError.ErrorMessage</span>
+        }
+        <div class="form-text">ไม่เกิน @ReviewRules.MaxCommentLength ตัวอักษร · แสดงบนหน้าห้องพักในชื่อ “@shownName” · ผู้ดูแลระบบซ่อนรีวิวที่ไม่สุภาพหรือเป็นโฆษณาได้</div>
+    </div>
+
+    <button type="submit" class="cyber-btn w-100 mt-4">@(isEdit ? "บันทึกการแก้ไข" : "ส่งรีวิว")</button>
+</form>
+
+@section Scripts {
+    <script>
+        // Say in words which score is selected (the stars alone are only a picture).
+        (() => {
+            const labels = { 5: 'ยอดเยี่ยม', 4: 'ดีมาก', 3: 'ดี', 2: 'พอใช้', 1: 'ควรปรับปรุง' };
+            const text = document.getElementById('rating-text');
+            document.querySelectorAll('.star-input input').forEach((input) => {
+                input.addEventListener('change', () => { text.textContent = `${input.value} ดาว — ${labels[input.value]}`; });
+            });
+        })();
+    </script>
+}

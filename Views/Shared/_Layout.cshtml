@@ -1,0 +1,33 @@
+﻿@* Layout for visitors who are not signed in (see _ViewStart.cshtml). *@
+@inject RolePortals Portals
+@{
+    // The banner with the room search is for browsing rooms on the customer site only.
+    var showBanner = !RolePortals.IsBackOffice(Portals.RoleOf(Context)) &&
+                     ViewContext.IsActive("Home", "Index", "Rooms", "RoomDetails", "Promotions");
+}
+<!DOCTYPE html>
+<html lang="th" data-bs-theme="dark">
+<head>
+    <partial name="_SiteHead" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <partial name="_SiteHeader" />
+    @if (showBanner)
+    {
+        <partial name="_SiteBanner" />
+    }
+
+    <main id="main-content" role="main" class="container flex-grow-1 py-4" tabindex="-1">
+        <div class="cyber-panel">
+            <partial name="_StatusMessages" />
+            @RenderBody()
+        </div>
+    </main>
+
+    <partial name="_SiteFooter" />
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

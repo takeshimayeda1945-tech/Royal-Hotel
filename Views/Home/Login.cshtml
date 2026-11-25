@@ -1,0 +1,118 @@
+@model LoginViewModel
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject RolePortals Portals
+@{
+    Layout = null;
+    var returnUrl = ViewData["ReturnUrl"] as string;
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+    // Any account may log in on any port; it is then moved to the port of its role
+    // (Infrastructure/RolePortals.cs, LoginHandoff.cs).
+    var portalRole = Portals.RoleOf(Context) ?? UserRoles.Customer;
+    var isCustomerPortal = !RolePortals.IsBackOffice(portalRole);
+    var thisPort = Context.Connection.LocalPort;
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>เข้าสู่ระบบ - Royal Hotel</title>
+    <link rel="icon" href="~/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+</head>
+<body>
+<div class="cyber-wrapper">
+    <div class="cyber-visual">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+        <div class="visual-content">
+            <div class="brand-tag">// ROYAL HOTEL</div>
+            <h1 class="visual-title">Book<span>.</span><br>Your<br>Stay</h1>
+            <p class="visual-sub">Welcome to the future of booking</p>
+        </div>
+    </div>
+
+    <main class="cyber-login">
+        <div class="login-card">
+            @if (isCustomerPortal)
+            {
+                <a class="auth-back" asp-controller="Home" asp-action="Index">&larr; กลับหน้าหลัก Royal Hotel</a>
+            }
+            else
+            {
+                <a class="auth-back" href="@Portals.UrlFor(UserRoles.Customer, Context.Request)">&larr; ไปหน้าเว็บไซต์สำหรับลูกค้า</a>
+            }
+            <h2 class="login-title">Log<span class="accent">//</span>In</h2>
+            <p class="login-sub">@(isCustomerPortal ? "Royal Hotel Member Access" : $"Royal Hotel {portalRole} Portal")</p>
+            <p class="portal-badge">พอร์ต @thisPort · @UserRoles.ThaiName(portalRole)</p>
+            <p class="portal-hint">เข้าสู่ระบบด้วยบัญชีบทบาทใดก็ได้ ระบบจะพาไปยังพอร์ตของบทบาทนั้นให้อัตโนมัติ</p>
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="auth-alert success" role="status">@successMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="auth-alert error" role="alert">@errorMessage</div>
+            }
+            @if (returnUrl != null && string.IsNullOrEmpty(successMessage))
+            {
+                <div class="auth-alert info">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</div>
+            }
+
+            <form asp-controller="Home" asp-action="Login" asp-route-returnUrl="@returnUrl" method="post">
+                <div asp-validation-summary="ModelOnly" role="alert"></div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Email">Email · อีเมล</label>
+                    <input type="email" class="form-control" placeholder="you@example.com" asp-for="Email" autocomplete="email" autofocus required />
+                    <span asp-validation-for="Email" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Password">Password · รหัสผ่าน</label>
+                    <div class="password-field">
+                        <input type="password" class="form-control" placeholder="••••••••" asp-for="Password" autocomplete="current-password" required />
+                        <button type="button" class="password-toggle" data-toggle-password="#Password" aria-pressed="false" aria-label="แสดงหรือซ่อนรหัสผ่าน">แสดง</button>
+                    </div>
+                    <span asp-validation-for="Password" class="field-error"></span>
+                </div>
+
+                <button type="submit" class="btn-login">Log In</button>
+            </form>
+
+            @if (isCustomerPortal)
+            {
+                <div class="login-footer">
+                    ยังไม่มีบัญชี? <a asp-controller="Home" asp-action="Register" asp-route-returnUrl="@returnUrl">Register</a>
+                </div>
+            }
+
+            @if (Env.IsDevelopment())
+            {
+                @* Only while developing / presenting: one click fills in a demo account of each role. *@
+                <details class="demo-accounts">
+                    <summary>บัญชีทดลอง (แสดงเฉพาะโหมด Development)</summary>
+                    <ul>
+                        @foreach (var account in DemoAccounts.All)
+                        {
+                            <li>
+                                <button type="button" data-fill-login data-email="@account.Email" data-password="@account.Password">
+                                    <strong>@UserRoles.ThaiName(account.Role) · พอร์ต @Portals.PortFor(account.Role)</strong>
+                                    <span>@account.Email / @account.Password</span>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </details>
+            }
+        </div>
+    </main>
+</div>
+<script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

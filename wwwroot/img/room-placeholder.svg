@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Royal Hotel room">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#141d26"/>
+      <stop offset="1" stop-color="#070b10"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="600" fill="url(#bg)"/>
+  <g fill="none" stroke="#00f0ff" stroke-opacity="0.12">
+    <path d="M0 150H900M0 300H900M0 450H900M150 0V600M300 0V600M450 0V600M600 0V600M750 0V600"/>
+  </g>
+  <!-- bed -->
+  <g fill="none" stroke="#00f0ff" stroke-width="10" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M250 380V260a30 30 0 0 1 30-30h340a30 30 0 0 1 30 30v120"/>
+    <path d="M200 400h500v70H200z"/>
+    <path d="M220 470v40M680 470v40"/>
+  </g>
+  <g fill="#fcee0a">
+    <rect x="290" y="300" width="140" height="60" rx="18"/>
+    <rect x="470" y="300" width="140" height="60" rx="18"/>
+  </g>
+  <text x="450" y="160" fill="#edf4ff" font-family="Orbitron, Tahoma, sans-serif" font-size="44" font-weight="700" text-anchor="middle" letter-spacing="8">ROYAL HOTEL</text>
+  <rect x="0" y="592" width="900" height="8" fill="#ff0055"/>
+</svg>

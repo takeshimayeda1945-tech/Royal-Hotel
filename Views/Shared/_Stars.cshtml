@@ -1,0 +1,7 @@
+@model double
+@* Five stars filled up to the rating (4.3 → four stars and a third). Screen readers hear "4.3 จาก 5 ดาว". *@
+@{
+    var value = Math.Clamp(Model, 0, ReviewRules.MaxRating);
+    var percent = (value / ReviewRules.MaxRating * 100).ToString("0.#", CultureInfo.InvariantCulture);
+}
+<span class="stars" role="img" aria-label="@value.ToString("0.0", CultureInfo.InvariantCulture) จาก 5 ดาว"><span class="stars-fill" style="width: @percent%" aria-hidden="true">★★★★★</span><span aria-hidden="true">★★★★★</span></span>

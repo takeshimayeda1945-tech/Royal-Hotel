@@ -1,0 +1,369 @@
+﻿@model IEnumerable<Intouch_67173986_L003.Models.CyberUser>
+@using Intouch_67173986_L003.Models
+@{
+    Layout = null;
+    ViewData["Title"] = "User List // NETRUNNER ADMIN";
+    var editUser = ViewBag.EditUser as CyberUser;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cp-yellow: #fcee0a;
+            --cp-cyan: #00f0ff;
+            --cp-red: #ff0055;
+            --cp-dark: #090b10;
+            --cp-panel: #11161d;
+            --cp-panel-2: #171d26;
+            --cp-text: #e7ecff;
+            --cp-muted: #91a5b8;
+            --cp-line: rgba(255,255,255,0.14);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 36px 20px;
+            font-family: 'Orbitron', sans-serif;
+            background:
+                radial-gradient(circle at 15% 15%, rgba(255,0,85,0.12), transparent 18%),
+                radial-gradient(circle at 85% 10%, rgba(0,240,255,0.14), transparent 20%),
+                linear-gradient(135deg, #090b10 0%, #101720 100%);
+            color: var(--cp-text);
+        }
+
+        .cyber-shell {
+            max-width: 1180px;
+            margin: 0 auto;
+            border: 1px solid var(--cp-line);
+            background: rgba(17, 22, 29, 0.92);
+            box-shadow: 0 0 30px rgba(0,240,255,0.12), 0 0 0 1px rgba(252,238,10,0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cyber-shell::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(0,240,255,0.12);
+            pointer-events: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--cp-line);
+            background: rgba(0,0,0,0.15);
+        }
+
+        .brand {
+            color: var(--cp-yellow);
+            font-size: 0.9rem;
+            letter-spacing: 0.2rem;
+            text-transform: uppercase;
+        }
+
+        .actions-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-link, .primary-btn, .danger-btn, .ghost-btn {
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 16px;
+            font-size: 0.7rem;
+            letter-spacing: 0.12rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.18s ease;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .nav-link { color: var(--cp-cyan); }
+        .primary-btn { background: var(--cp-yellow); color: #0d1117; border-color: var(--cp-yellow); }
+        .ghost-btn { background: transparent; color: var(--cp-cyan); border-color: rgba(0,240,255,0.45); }
+        .danger-btn { background: transparent; color: #ff8ab6; border-color: rgba(255,0,85,0.5); }
+        .nav-link:hover, .primary-btn:hover, .ghost-btn:hover, .danger-btn:hover { transform: translateY(-1px); }
+
+        .content {
+            padding: 28px;
+        }
+
+        .title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            margin: 0;
+            font-size: clamp(1.8rem, 3vw, 2.7rem);
+            color: var(--cp-yellow);
+            letter-spacing: 0.14rem;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--cp-muted);
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.14rem;
+        }
+
+        .success {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border: 1px solid rgba(0,240,255,0.35);
+            background: rgba(0,240,255,0.08);
+            color: var(--cp-cyan);
+            font-size: 0.72rem;
+            letter-spacing: 0.1rem;
+            text-transform: uppercase;
+        }
+
+        .editor {
+            margin-bottom: 24px;
+            padding: 22px;
+            border: 1px solid rgba(0,240,255,0.22);
+            background: rgba(9,11,16,0.7);
+        }
+
+        .editor h3 {
+            margin: 0 0 16px;
+            font-size: 0.86rem;
+            letter-spacing: 0.18rem;
+            text-transform: uppercase;
+            color: var(--cp-cyan);
+        }
+
+        .editor form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.65rem;
+            letter-spacing: 0.12rem;
+            color: var(--cp-muted);
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid rgba(0,240,255,0.32);
+            background: rgba(9,11,16,0.92);
+            color: var(--cp-text);
+            font-family: 'Orbitron', sans-serif;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--cp-yellow);
+            box-shadow: 0 0 0 1px rgba(252,238,10,0.15);
+        }
+
+        .editor-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: rgba(9,11,16,0.5);
+        }
+
+        th, td {
+            padding: 14px 12px;
+            border: 1px solid var(--cp-line);
+            text-align: left;
+            vertical-align: top;
+            font-size: 0.82rem;
+        }
+
+        th {
+            background: rgba(255,255,255,0.02);
+            color: var(--cp-yellow);
+            text-transform: uppercase;
+            letter-spacing: 0.12rem;
+        }
+
+        td {
+            color: var(--cp-text);
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            padding: 26px 18px;
+            text-align: center;
+            color: var(--cp-muted);
+            border: 1px dashed rgba(0,240,255,0.28);
+            margin-top: 12px;
+            letter-spacing: 0.08rem;
+            text-transform: uppercase;
+        }
+
+        @@media (max-width: 760px) {
+            .title-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .editor form {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-shell">
+        <div class="header">
+            <div class="brand">// Netrunner Control</div>
+            <div class="actions-header">
+                <a class="ghost-btn" asp-controller="Home" asp-action="AddUser">Add User</a>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="title-row">
+                <div>
+                    <h1 class="title">User List</h1>
+                    <p class="subtitle">Active operator roster</p>
+                </div>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="success">@TempData["SuccessMessage"]</div>
+            }
+
+            @if (editUser != null)
+            {
+                <div class="editor">
+                    <h3>Edit Operator</h3>
+                    <form asp-action="UpdateUser" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" value="@editUser.Id" />
+
+                        <div class="field full">
+                            <label for="Name">Name</label>
+                            <input id="Name" name="Name" value="@editUser.Name" required />
+                        </div>
+
+                        <div class="field full">
+                            <label for="Email">Email</label>
+                            <input id="Email" name="Email" type="email" value="@editUser.Email" required />
+                        </div>
+
+                        <div class="field">
+                            <label for="PhoneNumber">Phone Number</label>
+                            <input id="PhoneNumber" name="PhoneNumber" value="@editUser.PhoneNumber" required />
+                        </div>
+
+                        <div class="field">
+                            <label for="Birthday">Birthday</label>
+                            <input id="Birthday" name="Birthday" type="date" value="@editUser.Birthday.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <div class="field full">
+                            <label for="Password">Password</label>
+                            <input id="Password" name="Password" type="password" value="@editUser.Password" required />
+                        </div>
+
+                        <div class="editor-actions">
+                            <a class="ghost-btn" asp-action="UserList">Cancel</a>
+                            <button type="submit" class="primary-btn">Update</button>
+                        </div>
+                    </form>
+                </div>
+            }
+
+            @if (Model.Any())
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Birthday</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>#@user.Id</td>
+                                <td>@user.Name</td>
+                                <td>@user.Email</td>
+                                <td>@user.PhoneNumber</td>
+                                <td>@user.Birthday.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="row-actions">
+                                        <a class="ghost-btn" asp-action="UserList" asp-route-editId="@user.Id">Edit</a>
+                                        <form asp-action="DeleteUser" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@user.Id" />
+                                            <button type="submit" class="danger-btn">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">No users detected in the database.</div>
+            }
+        </div>
+    </div>
+</body>
+</html>

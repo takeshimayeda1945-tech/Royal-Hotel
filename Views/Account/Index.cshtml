@@ -1,0 +1,92 @@
+@model AccountPageModel
+@inject RolePortals Portals
+@{
+    ViewData["Title"] = "บัญชีของฉัน";
+    var user = Model.User;
+    // Bookings and the birthday promotion are for members; employees see their role and port instead.
+    var isMember = user.Role == UserRoles.Customer;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="cyber-section-title mb-1">My Account</div>
+        <h2 class="cyber-heading mb-0">บัญชีของฉัน</h2>
+    </div>
+    @if (isMember)
+    {
+        <a class="cyber-btn-outline" asp-controller="Home" asp-action="BookingHistory">ประวัติการจอง</a>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="stat-tile"><span>บทบาท</span><strong class="fs-6">@UserRoles.ThaiName(user.Role)</strong><small>@user.Role</small></div></div>
+    @if (isMember)
+    {
+        <div class="col-6 col-xl-3"><div class="stat-tile"><span>การจองทั้งหมด</span><strong>@Model.BookingCount</strong></div></div>
+        <div class="col-6 col-xl-3"><div class="stat-tile"><span>การจองที่ยังไม่สิ้นสุด</span><strong>@Model.UpcomingCount</strong></div></div>
+        <div class="col-6 col-xl-3"><div class="stat-tile"><span>เดือนเกิด (โปรวันเกิด)</span><strong class="fs-6">@user.Birthday.ToString("MMMM", CultureInfo.GetCultureInfo("th-TH"))</strong></div></div>
+    }
+    else if (Portals.HasPortal(user.Role))
+    {
+        <div class="col-6 col-xl-3"><div class="stat-tile"><span>พอร์ตของบทบาท</span><strong>@Portals.PortFor(user.Role)</strong><small>เข้าสู่ระบบที่พอร์ตไหนก็ได้ ระบบพามาที่นี่</small></div></div>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="cyber-booking-box h-100">
+            <div class="cyber-section-title mb-2">ข้อมูลส่วนตัว</div>
+            <form asp-action="UpdateProfile" method="post">
+                <div asp-validation-summary="ModelOnly" class="cyber-validation-summary"></div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="accountEmail">อีเมล (ใช้เข้าสู่ระบบ)</label>
+                    <input id="accountEmail" class="form-control" value="@user.Email" readonly aria-describedby="emailHelp" />
+                    <div id="emailHelp" class="form-text">ต้องการเปลี่ยนอีเมล ติดต่อผู้ดูแลระบบ</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Profile.Name" class="form-label">ชื่อ</label>
+                    <input asp-for="Profile.Name" class="form-control" maxlength="100" autocomplete="name" required />
+                    <span asp-validation-for="Profile.Name" class="field-error"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Profile.PhoneNumber" class="form-label">เบอร์โทร</label>
+                    <input asp-for="Profile.PhoneNumber" type="tel" class="form-control" maxlength="50" autocomplete="tel" required />
+                    <span asp-validation-for="Profile.PhoneNumber" class="field-error"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="accountBirthday">วันเกิด</label>
+                    <input id="accountBirthday" class="form-control" value="@DisplayText.Date(user.Birthday)" readonly aria-describedby="birthdayHelp" />
+                    <div id="birthdayHelp" class="form-text">@(isMember ? "วันเกิดใช้คำนวณโปรโมชั่นเดือนเกิด จึงแก้ไขเองไม่ได้" : "ต้องการแก้ไขวันเกิด ติดต่อผู้ดูแลระบบ")</div>
+                </div>
+                <button type="submit" class="cyber-btn w-100">บันทึกข้อมูลส่วนตัว</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="cyber-booking-box h-100">
+            <div class="cyber-section-title mb-2">เปลี่ยนรหัสผ่าน</div>
+            <form asp-action="ChangePassword" method="post" autocomplete="off">
+                <div class="mb-3">
+                    <label asp-for="Password.CurrentPassword" class="form-label">รหัสผ่านปัจจุบัน</label>
+                    <input asp-for="Password.CurrentPassword" type="password" class="form-control" autocomplete="current-password" required />
+                    <span asp-validation-for="Password.CurrentPassword" class="field-error"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password.NewPassword" class="form-label">รหัสผ่านใหม่</label>
+                    <input asp-for="Password.NewPassword" type="password" class="form-control" minlength="@AccountRules.MinPasswordLength" maxlength="@AccountRules.MaxPasswordLength" autocomplete="new-password" required />
+                    <div class="form-text">อย่างน้อย @AccountRules.MinPasswordLength ตัวอักษร</div>
+                    <span asp-validation-for="Password.NewPassword" class="field-error"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password.ConfirmPassword" class="form-label">ยืนยันรหัสผ่านใหม่</label>
+                    <input asp-for="Password.ConfirmPassword" type="password" class="form-control" maxlength="@AccountRules.MaxPasswordLength" autocomplete="new-password" required />
+                    <span asp-validation-for="Password.ConfirmPassword" class="field-error"></span>
+                </div>
+                <button type="submit" class="cyber-btn-outline w-100">เปลี่ยนรหัสผ่าน</button>
+            </form>
+            <div class="cyber-note">รหัสผ่านถูกเก็บแบบเข้ารหัสทางเดียว (hash) — เจ้าหน้าที่ก็ไม่เห็นรหัสผ่านของคุณ</div>
+        </div>
+    </div>
+</div>

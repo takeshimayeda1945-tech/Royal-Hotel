@@ -1,0 +1,1643 @@
+/* =====================================================================
+   Royal Hotel – styles for _Layout (visitors) and _Layout2 (signed in).
+   The header, banner, sidebar and footer used to be copied into both layouts;
+   they live here now so a change is made once.
+   ===================================================================== */
+
+html {
+  font-size: 14px;
+  position: relative;
+  min-height: 100%;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+:root {
+  --cp-yellow: #fcee0a;
+  --cp-cyan: #00f0ff;
+  --cp-red: #ff0055;
+  --cp-dark: #070b10;
+  --cp-panel: #101720;
+  --cp-panel-2: #141d26;
+  --cp-line: rgba(0, 240, 255, 0.35);
+  --cp-glow: rgba(252, 238, 10, 0.18);
+  --cp-light: #edf4ff;
+  --cp-muted: #9fb0bf;
+  --cp-success: #3dffa8;
+  --cp-danger: #ff5a79;
+  /* Orbitron has Latin letters only; Thai falls back to Chakra Petch, then to the system font. */
+  --cp-font: 'Orbitron', 'Chakra Petch', 'Leelawadee UI', 'Tahoma', sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, rgba(7, 11, 16, 1) 0%, rgba(11, 18, 24, 1) 100%);
+  color: var(--cp-light);
+  font-family: var(--cp-font);
+  letter-spacing: 0.5px;
+  min-height: 100vh;
+}
+
+a {
+  text-decoration: none;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-select:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem rgba(0, 0, 0, 0.6), 0 0 0 0.25rem rgba(0, 240, 255, 0.55);
+}
+
+.text-brand {
+  color: var(--cp-yellow);
+}
+
+/* Keyboard users can jump over the menu straight to the page content. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 2000;
+  background: var(--cp-yellow);
+  color: #000;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+main:focus {
+  outline: none;
+}
+
+/* ---------- Header ---------- */
+.cyber-header {
+  background: linear-gradient(180deg, rgba(252, 238, 10, 0.96), rgba(240, 214, 32, 0.94));
+  border-bottom: 3px solid var(--cp-cyan);
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 98% 100%, 0 100%);
+  box-shadow: 0 0 15px rgba(252, 238, 10, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* .navbar removes the .container gutter; put it back so the logo never touches the screen edge. */
+.cyber-header > .navbar {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.cyber-header .navbar-toggler-icon {
+  filter: invert(1);
+}
+
+.cyber-brand {
+  color: #000 !important;
+  font-weight: 900;
+  font-size: 1.5rem;
+  text-shadow: 2px 2px 0 var(--cp-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.15rem;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #000;
+  color: var(--cp-yellow);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+  margin-right: 10px;
+}
+
+.cyber-link {
+  color: #000 !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  font-size: 0.78rem;
+  padding: 0.55rem 0.9rem !important;
+  white-space: nowrap;
+}
+
+.cyber-header .cyber-btn,
+.cyber-header .cyber-btn-outline {
+  white-space: nowrap;
+}
+
+/* Back-office ports: which portal this is (role and port), next to the logo. */
+.portal-chip {
+  display: inline-block;
+  margin-right: auto;
+  padding: 0.3rem 0.6rem;
+  background: #000;
+  border: 1px solid var(--cp-cyan);
+  color: var(--cp-cyan);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 991.98px) {
+  .portal-chip {
+    margin-left: 0.25rem;
+  }
+}
+
+/* Laptop widths: the menu, the user's name and Log Out must stay on one line. */
+@media (min-width: 992px) and (max-width: 1399px) {
+  .cyber-link {
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.72rem;
+  }
+
+  .cyber-brand {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .cyber-brand {
+    font-size: 1.05rem;
+    letter-spacing: 0.06rem;
+  }
+
+  .brand-mark {
+    margin-right: 6px;
+  }
+
+  .cyber-user-pill {
+    max-width: 150px;
+  }
+
+  .cyber-header .cyber-btn {
+    padding: 0.6rem 0.75rem;
+  }
+}
+
+.cyber-link:hover,
+.cyber-link.active {
+  background-color: #000;
+  color: var(--cp-cyan) !important;
+  box-shadow: -3px 3px 0 var(--cp-red);
+}
+
+.cyber-header .cyber-btn-outline {
+  color: #000;
+  border-color: #000;
+}
+
+.cyber-header .cyber-btn-outline:hover {
+  background: #000;
+  color: var(--cp-cyan);
+}
+
+.cyber-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid var(--cp-cyan);
+  color: var(--cp-light);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 0.55rem 0.8rem;
+  letter-spacing: 0.08rem;
+  max-width: 230px;
+}
+
+.cyber-user-pill .pill-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+a.cyber-user-pill:hover,
+a.cyber-user-pill:focus-visible {
+  color: var(--cp-cyan);
+  box-shadow: -3px 3px 0 var(--cp-red);
+}
+
+.cyber-user-pill .avatar,
+.cyber-sidebar-user .avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cp-yellow);
+  color: #000;
+  font-weight: 900;
+  border-radius: 50%;
+}
+
+/* ---------- Banner ---------- */
+.cyber-banner {
+  background:
+    linear-gradient(135deg, rgba(7, 11, 16, 0.75), rgba(16, 23, 32, 0.9)),
+    url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat,
+    var(--cp-panel);
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid var(--cp-red);
+}
+
+.cyber-banner-inner {
+  max-width: 780px;
+  padding: 2rem 0;
+}
+
+.cyber-kicker {
+  display: inline-block;
+  background: rgba(255, 0, 85, 0.12);
+  border: 1px solid var(--cp-red);
+  color: var(--cp-yellow);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18rem;
+  margin-bottom: 1rem;
+}
+
+.cyber-banner h1 {
+  font-size: clamp(2.1rem, 4vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  margin: 0 0 1rem;
+  color: #fff;
+  text-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+
+.cyber-banner p {
+  color: var(--cp-light);
+  opacity: 0.8;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ---------- Sidebar (_Layout2) ---------- */
+.cyber-sidebar {
+  background: rgba(16, 23, 32, 0.9);
+  border: 1px solid rgba(252, 238, 10, 0.45);
+  box-shadow: 0 0 14px rgba(252, 238, 10, 0.1);
+  padding: 1.25rem;
+}
+
+.cyber-sidebar-toggle {
+  width: 100%;
+  margin-top: 1rem;
+  background: rgba(16, 23, 32, 0.9);
+  border: 1px solid rgba(252, 238, 10, 0.45);
+  color: var(--cp-yellow);
+  font-weight: 700;
+  letter-spacing: 0.08rem;
+  text-align: left;
+  padding: 0.7rem 1rem;
+}
+
+.cyber-sidebar-toggle[aria-expanded="true"] {
+  border-bottom-color: transparent;
+}
+
+.cyber-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--cp-red);
+}
+
+.cyber-sidebar-user .name {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.cyber-sidebar-user .role {
+  color: var(--cp-muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+}
+
+.cyber-sidebar-title {
+  color: var(--cp-yellow);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18rem;
+  margin: 0 0 0.6rem;
+}
+
+.cyber-sidebar-title + .nav {
+  margin-bottom: 1.2rem;
+}
+
+.cyber-nav-link {
+  color: var(--cp-cyan) !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  border-left: 3px solid transparent;
+  border-radius: 0 !important;
+  padding: 0.55rem 0.8rem !important;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+}
+
+.cyber-nav-link:hover,
+.cyber-nav-link.active {
+  background-color: rgba(0, 240, 255, 0.1) !important;
+  color: #fff !important;
+  border-left-color: var(--cp-red);
+  padding-left: 1rem !important;
+}
+
+@media (min-width: 992px) {
+  .cyber-sidebar {
+    position: sticky;
+    top: 90px; /* below the sticky header */
+    margin-top: 2rem; /* lines up with .cyber-panel */
+  }
+}
+
+/* ---------- Footer ---------- */
+.cyber-footer {
+  background: #050608;
+  border-top: 2px solid var(--cp-red);
+  color: var(--cp-cyan);
+  box-shadow: 0 -5px 15px rgba(255, 0, 85, 0.2);
+  padding: 1.4rem 0;
+  margin-top: 3rem;
+}
+
+.cyber-footer a {
+  color: var(--cp-yellow);
+}
+
+.cyber-footer a:hover {
+  color: var(--cp-cyan);
+}
+
+@media (max-width: 991px) {
+  .cyber-header {
+    clip-path: none;
+  }
+
+  .navbar-nav {
+    gap: 0.4rem;
+  }
+}
+
+/* ---------- Buttons ---------- */
+.cyber-btn,
+.cyber-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08rem;
+  border-radius: 0;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cyber-btn {
+  background: var(--cp-cyan);
+  color: #000 !important;
+  border: 1px solid var(--cp-cyan);
+  font-weight: 800;
+}
+
+.cyber-btn:hover,
+.cyber-btn:focus-visible {
+  background: #000;
+  color: var(--cp-cyan) !important;
+  box-shadow: -3px 3px 0 var(--cp-red);
+}
+
+.cyber-btn-outline {
+  background: transparent;
+  color: var(--cp-light);
+  border: 1px solid var(--cp-cyan);
+  font-weight: 700;
+}
+
+.cyber-btn-outline:hover,
+.cyber-btn-outline:focus-visible {
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+  color: var(--cp-cyan);
+}
+
+/* A form that is being sent: its buttons wait (stops double bookings / double payments). */
+form[data-submitting] button[type="submit"],
+form[data-submitting] button:not([type]) {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+.cyber-back-link {
+  color: var(--cp-cyan);
+  font-size: 0.8rem;
+  letter-spacing: 0.06rem;
+  text-decoration: none;
+}
+
+.cyber-back-link:hover {
+  color: var(--cp-yellow);
+}
+
+/* ---------- Search bar ---------- */
+.cyber-search {
+  background: rgba(16, 23, 32, 0.86);
+  border: 1px solid var(--cp-line);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.15);
+  border-radius: 18px;
+  padding: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.cyber-search-hero {
+  margin-top: -28px;
+}
+
+.cyber-search input,
+.cyber-search select {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: var(--cp-light);
+  border-radius: 0;
+  height: 52px;
+}
+
+.cyber-search input::placeholder {
+  color: rgba(237, 244, 255, 0.55);
+}
+
+.cyber-search-summary {
+  color: var(--cp-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.04rem;
+}
+
+.cyber-search-summary strong {
+  color: var(--cp-yellow);
+}
+
+/* ---------- Panels & headings ---------- */
+.cyber-panel {
+  background: rgba(16, 23, 32, 0.9);
+  border: 1px solid var(--cp-line);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.12);
+  padding: 1.5rem;
+  position: relative;
+  margin-top: 2rem;
+}
+
+.cyber-panel::before {
+  content: "NEON // HOTEL GRID";
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background: var(--cp-red);
+  color: #fff;
+  font-size: 0.68rem;
+  letter-spacing: 0.12rem;
+  padding: 2px 8px;
+  font-weight: 700;
+}
+
+.cyber-section-title {
+  color: var(--cp-yellow);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.cyber-heading {
+  font-weight: 800;
+  letter-spacing: 0.08rem;
+  color: var(--cp-light);
+}
+
+.cyber-note {
+  color: var(--cp-muted);
+  font-size: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.cyber-prose {
+  color: var(--cp-light);
+  line-height: 1.9;
+  max-width: 820px;
+}
+
+.cyber-prose h3 {
+  color: var(--cp-cyan);
+  font-size: 0.95rem;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  margin: 1.6rem 0 0.6rem;
+}
+
+/* ---------- Room cards ---------- */
+.cyber-room-card {
+  background: linear-gradient(180deg, rgba(20, 29, 38, 0.98), rgba(12, 17, 22, 1));
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  transition: all 0.25s ease;
+  height: 100%;
+}
+
+.cyber-room-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.18);
+}
+
+.cyber-room-card img {
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  border-bottom: 1px solid rgba(252, 238, 10, 0.25);
+  background: var(--cp-panel-2);
+}
+
+.cyber-room-body {
+  padding: 1.15rem;
+}
+
+/* Room listing cards: keep the action buttons aligned at the bottom of every card. */
+.cyber-room-card--listing {
+  display: flex;
+  flex-direction: column;
+}
+
+.cyber-room-card--listing .cyber-room-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cyber-room-card--listing .cyber-pill {
+  align-self: flex-start;
+}
+
+.cyber-room-card--listing .cyber-room-desc {
+  margin-bottom: 0; /* flex items do not collapse margins with the list below */
+}
+
+.cyber-room-actions {
+  margin-top: auto;
+}
+
+/* Thai labels such as "รายละเอียด" or "ทำเสร็จแล้ว" must not break in the middle of a button:
+   when two buttons do not fit side by side, they go on two rows instead. */
+.cyber-room-actions,
+.task-actions {
+  flex-wrap: wrap;
+}
+
+.cyber-room-actions .cyber-btn,
+.cyber-room-actions .cyber-btn-outline,
+.task-actions .cyber-btn,
+.task-actions .cyber-btn-outline {
+  white-space: nowrap;
+}
+
+/* Housekeeping job cards: "label  value" lines, and a yellow edge on the job you are doing. */
+.task-facts {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.task-facts > div {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.task-facts dt {
+  color: var(--cp-muted);
+  font-weight: 400;
+}
+
+.task-facts dd {
+  color: var(--cp-light);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.task-card--mine {
+  border-color: rgba(252, 238, 10, 0.6);
+}
+
+.cyber-room-name {
+  color: var(--cp-light);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.cyber-room-meta {
+  color: var(--cp-muted);
+  font-size: 0.8rem;
+  line-height: 1.8;
+}
+
+.cyber-room-desc {
+  color: var(--cp-muted);
+  font-size: 0.78rem;
+  line-height: 1.8;
+  margin: 1rem 0;
+  white-space: pre-line;
+}
+
+.cyber-detail-image {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: var(--cp-panel-2);
+}
+
+@media (max-width: 575px) {
+  .cyber-detail-image {
+    height: 240px;
+  }
+}
+
+.cyber-price {
+  color: var(--cp-yellow);
+  font-weight: 900;
+  font-size: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.cyber-price small {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--cp-muted);
+}
+
+.cyber-pill {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.65rem;
+  border: 1px solid var(--cp-cyan);
+  color: var(--cp-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+  margin-bottom: 0.7rem;
+}
+
+.cyber-feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.9rem 0 1rem;
+}
+
+.cyber-feature-list li {
+  color: var(--cp-light);
+  opacity: 0.85;
+  font-size: 0.78rem;
+  margin-bottom: 0.45rem;
+}
+
+.cyber-feature-list li::before {
+  content: "> ";
+  color: var(--cp-red);
+  font-weight: 900;
+}
+
+.cyber-booking-box {
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1rem;
+}
+
+/* Dates already taken on the room details page. */
+.booked-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+
+.booked-ranges li {
+  border: 1px dashed rgba(255, 90, 121, 0.6);
+  color: var(--cp-danger);
+  font-size: 0.72rem;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
+.availability-ok {
+  color: var(--cp-success);
+}
+
+.availability-taken {
+  color: var(--cp-danger);
+}
+
+/* ---------- Status pills ---------- */
+.status-pill {
+  margin-bottom: 0;
+}
+
+.status-confirmed {
+  border-color: var(--cp-success);
+  color: var(--cp-success);
+}
+
+.status-cancelled {
+  border-color: var(--cp-danger);
+  color: var(--cp-danger);
+}
+
+.status-completed {
+  border-color: var(--cp-muted);
+  color: var(--cp-muted);
+}
+
+.status-info {
+  border-color: var(--cp-cyan);
+  color: var(--cp-cyan);
+}
+
+.status-warning {
+  border-color: var(--cp-yellow);
+  color: var(--cp-yellow);
+}
+
+/* ---------- Messages, validation & empty states ---------- */
+.cyber-alert {
+  border: 1px solid;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.2rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.03rem;
+}
+
+.cyber-alert-success {
+  border-color: rgba(61, 255, 168, 0.5);
+  background: rgba(61, 255, 168, 0.08);
+  color: var(--cp-success);
+}
+
+.cyber-alert-error {
+  border-color: rgba(255, 90, 121, 0.55);
+  background: rgba(255, 0, 85, 0.1);
+  color: var(--cp-danger);
+}
+
+.cyber-alert-info {
+  border-color: rgba(0, 240, 255, 0.45);
+  background: rgba(0, 240, 255, 0.06);
+  color: var(--cp-cyan);
+}
+
+.cyber-alert-warning {
+  border-color: var(--cp-yellow);
+  background: rgba(252, 238, 10, 0.07);
+  color: var(--cp-yellow);
+}
+
+.cyber-validation-summary.validation-summary-valid {
+  display: none;
+}
+
+.cyber-validation-summary.validation-summary-errors {
+  border: 1px solid rgba(255, 90, 121, 0.55);
+  background: rgba(255, 0, 85, 0.1);
+  color: var(--cp-danger);
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.cyber-validation-summary ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.field-error {
+  display: block;
+  color: var(--cp-danger);
+  font-size: 0.78rem;
+  margin-top: 0.3rem;
+}
+
+.input-validation-error {
+  border-color: var(--cp-danger) !important;
+}
+
+.cyber-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--cp-muted);
+  border: 1px dashed rgba(0, 240, 255, 0.28);
+  letter-spacing: 0.04rem;
+}
+
+/* ---------- Checkout & price summary ---------- */
+.cyber-summary {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.85rem;
+}
+
+.cyber-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed rgba(0, 240, 255, 0.15);
+}
+
+.cyber-summary dt {
+  font-weight: 400;
+  color: var(--cp-muted);
+}
+
+.cyber-summary dd {
+  margin: 0;
+  color: var(--cp-light);
+  font-weight: 700;
+  text-align: right;
+}
+
+.cyber-summary .total {
+  border-bottom: none;
+  padding-top: 0.8rem;
+}
+
+.cyber-summary .total dt {
+  color: var(--cp-yellow);
+  text-transform: uppercase;
+  letter-spacing: 0.12rem;
+  font-weight: 700;
+}
+
+.cyber-summary .total dd {
+  color: var(--cp-yellow);
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.cyber-summary .discount dd,
+.cyber-summary .discount dt {
+  color: var(--cp-success);
+}
+
+/* ---------- Tables ---------- */
+.cyber-table {
+  --bs-table-bg: rgba(9, 11, 16, 0.6);
+  font-size: 0.85rem;
+}
+
+.cyber-table th {
+  color: var(--cp-yellow);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08rem;
+  white-space: nowrap;
+}
+
+.cyber-thumb {
+  width: 64px;
+  height: 44px;
+  object-fit: cover;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: var(--cp-panel-2);
+}
+
+/* ---------- Booking steps & payment ---------- */
+.cyber-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06rem;
+}
+
+.cyber-steps li {
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: var(--cp-muted);
+  padding: 0.4rem 0.8rem;
+}
+
+.cyber-steps li.done {
+  color: var(--cp-success);
+  border-color: rgba(61, 255, 168, 0.5);
+}
+
+.cyber-steps li.active {
+  color: #000;
+  background: var(--cp-yellow);
+  border-color: var(--cp-yellow);
+  font-weight: 700;
+}
+
+.pay-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pay-method {
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: var(--cp-light);
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btn-check:checked + .pay-method {
+  background: var(--cp-cyan);
+  border-color: var(--cp-cyan);
+  color: #000;
+  font-weight: 700;
+}
+
+.btn-check:focus-visible + .pay-method {
+  box-shadow: 0 0 0 0.25rem rgba(0, 240, 255, 0.55);
+}
+
+.pay-qr svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Back office ---------- */
+.cyber-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.cyber-tabs a {
+  color: var(--cp-cyan);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+.cyber-tabs a.active,
+.cyber-tabs a:hover {
+  background: rgba(0, 240, 255, 0.12);
+  color: #fff;
+  border-color: var(--cp-cyan);
+}
+
+/* Long e-mails and references may break anywhere instead of widening the table. */
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+  min-width: 9rem;
+}
+
+/* Front desk: the buttons of one booking stacked in a narrow column. */
+.staff-actions {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: end;
+}
+
+.staff-actions .btn {
+  white-space: nowrap;
+}
+
+/* KPI tiles */
+.stat-tile {
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0.9rem 1rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stat-tile span {
+  color: var(--cp-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.06rem;
+}
+
+.stat-tile strong {
+  color: var(--cp-light);
+  font-size: 1.35rem;
+  font-weight: 800;
+  overflow-wrap: break-word; /* break only when a value really does not fit, never mid-number by choice */
+}
+
+.stat-tile small {
+  color: var(--cp-muted);
+  font-size: 0.7rem;
+}
+
+/* Thin progress bar inside a tile (occupancy). */
+.stat-meter {
+  height: 6px;
+  background: rgba(159, 176, 191, 0.2);
+  margin-top: 0.35rem;
+}
+
+.stat-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--cp-cyan);
+}
+
+/* Single-series bar chart: thin bars, 4px rounded tops on the baseline, recessive grid. */
+.bar-chart {
+  margin: 0;
+}
+
+.bar-chart-plot {
+  position: relative;
+  height: 180px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  border-bottom: 1px solid rgba(159, 176, 191, 0.4);
+  background: repeating-linear-gradient(to top, transparent 0, transparent 44px, rgba(159, 176, 191, 0.12) 44px, rgba(159, 176, 191, 0.12) 45px);
+}
+
+.bar-chart-col {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  outline: none;
+}
+
+.bar-chart-bar {
+  width: 60%;
+  max-width: 36px;
+  background: var(--cp-cyan);
+  border-radius: 4px 4px 0 0;
+}
+
+.bar-chart-col:hover .bar-chart-bar,
+.bar-chart-col:focus-visible .bar-chart-bar {
+  background: var(--cp-yellow);
+}
+
+.bar-chart-col:hover::after,
+.bar-chart-col:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% - 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: #000;
+  border: 1px solid var(--cp-cyan);
+  color: var(--cp-light);
+  font-size: 0.72rem;
+  padding: 0.25rem 0.5rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.bar-chart-labels {
+  display: flex;
+  gap: 2px;
+  margin-top: 0.35rem;
+}
+
+.bar-chart-labels span {
+  flex: 1;
+  text-align: center;
+  color: var(--cp-muted);
+  font-size: 0.62rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keep status pills and money amounts on one line. */
+.status-pill,
+.cyber-summary dd {
+  white-space: nowrap;
+}
+
+/* ---------- Error pages ---------- */
+.error-code {
+  font-size: clamp(3rem, 10vw, 6rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--cp-yellow);
+  text-shadow: 3px 3px 0 var(--cp-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cyber-room-card,
+  .cyber-btn,
+  .cyber-btn-outline,
+  .cyber-link,
+  .cyber-nav-link {
+    transition: none;
+  }
+
+  .cyber-room-card:hover {
+    transform: none;
+  }
+}
+
+/* ---------- Room list: type / price filter and sort ---------- */
+.room-filter .form-label {
+  color: var(--cp-muted);
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.room-filter-button {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* ---------- Special request (booking page, front desk) ---------- */
+.special-request {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  border-left: 3px solid var(--cp-yellow);
+  background: rgba(252, 238, 10, 0.06);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.special-request--compact {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.special-request-label {
+  color: var(--cp-yellow);
+  font-weight: 700;
+}
+
+/* ---------- Reviews: stars, room rating, review list, review form ---------- */
+.room-rating {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.15rem;
+  color: var(--cp-muted);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.room-rating strong {
+  color: var(--cp-yellow);
+}
+
+a.room-rating:hover,
+a.room-rating:focus-visible {
+  color: var(--cp-cyan);
+}
+
+.room-rating--none {
+  display: block;
+  font-size: 0.75rem;
+}
+
+/* Two rows of five stars on top of each other; the yellow one is cut to the rating. */
+.stars {
+  position: relative;
+  display: inline-block;
+  color: rgba(159, 176, 191, 0.35);
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.stars > span {
+  color: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+}
+
+.stars .stars-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  overflow: hidden;
+  color: var(--cp-yellow);
+}
+
+.review-summary {
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1rem;
+}
+
+.review-average {
+  color: var(--cp-yellow);
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.review-average small {
+  color: var(--cp-muted);
+  font-size: 1rem;
+}
+
+.review-bars {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.review-bars li {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr 2.6rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--cp-muted);
+  margin-bottom: 0.3rem;
+}
+
+.review-bars-track {
+  display: block;
+  height: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.review-bars-fill {
+  display: block;
+  height: 100%;
+  background: var(--cp-yellow);
+}
+
+.review-bars-count {
+  text-align: right;
+}
+
+.review-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.review-item {
+  border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+  padding: 0.9rem 0;
+}
+
+.review-comment {
+  margin: 0.5rem 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  color: var(--cp-light);
+}
+
+.review-comment--compact {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+/* Star picker: radios in reverse order so "this star and the ones before it" light up with CSS alone. */
+.star-input {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 0.25rem;
+}
+
+.star-input input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.star-input label {
+  font-size: 2.2rem;
+  line-height: 1;
+  color: rgba(159, 176, 191, 0.35);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.star-input input:checked ~ label,
+.star-input label:hover,
+.star-input label:hover ~ label {
+  color: var(--cp-yellow);
+}
+
+.star-input input:focus-visible + label {
+  outline: 2px solid var(--cp-cyan);
+  outline-offset: 2px;
+}
+
+/* ---------- Long admin lists: pager, hidden rows, audit log ---------- */
+.cyber-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.row-muted td {
+  opacity: 0.6;
+}
+
+.audit-table td {
+  vertical-align: top;
+}
+
+.audit-details {
+  font-size: 0.8rem;
+  letter-spacing: 0;
+}
+
+/* ---------- Receipt (white paper on screen and on paper) ---------- */
+.receipt-paper {
+  max-width: 820px;
+  margin: 0 auto;
+  background: #fff;
+  color: #1a1f26;
+  padding: 2rem 2.25rem;
+  font-family: 'Chakra Petch', 'Leelawadee UI', 'Tahoma', sans-serif;
+  letter-spacing: 0;
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.35), 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.receipt-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  border-bottom: 3px solid #1a1f26;
+  padding-bottom: 0.75rem;
+}
+
+.receipt-hotel {
+  font-family: var(--cp-font);
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: 0.12rem;
+}
+
+.receipt-title {
+  font-weight: 700;
+  font-size: 1.35rem;
+}
+
+.receipt-muted {
+  color: #5b6670;
+  font-size: 0.85rem;
+}
+
+.receipt-label {
+  color: #5b6670;
+  font-size: 0.78rem;
+  margin-right: 0.35rem;
+}
+
+.receipt-strong {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.receipt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  margin: 1rem 0;
+}
+
+.receipt-meta div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.receipt-meta dt {
+  color: #5b6670;
+  font-weight: 400;
+}
+
+.receipt-meta dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.receipt-parties {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem 2rem;
+  border-top: 1px solid #d5dbe0;
+  border-bottom: 1px solid #d5dbe0;
+  padding: 0.85rem 0;
+  margin-bottom: 1rem;
+}
+
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.receipt-table th {
+  background: #eef2f5;
+  color: #1a1f26;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-bottom: 1px solid #c6ced5;
+}
+
+.receipt-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #e3e8ec;
+  vertical-align: top;
+}
+
+.receipt-totals {
+  margin: 0.75rem 0 0 auto;
+  max-width: 460px;
+  font-size: 0.92rem;
+}
+
+.receipt-totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.receipt-totals dt {
+  font-weight: 400;
+}
+
+.receipt-totals dd {
+  margin: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.receipt-discount {
+  color: #0d7a4a;
+}
+
+.receipt-totals .receipt-grand {
+  border-top: 2px solid #1a1f26;
+  border-bottom: 2px solid #1a1f26;
+  margin-top: 0.35rem;
+  padding: 0.45rem 0.5rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.receipt-words {
+  text-align: right;
+  font-size: 0.85rem;
+  color: #3a444d;
+  margin: 0.35rem 0.5rem 1rem;
+}
+
+.receipt-payment {
+  border-top: 1px dashed #c6ced5;
+  padding-top: 0.6rem;
+  margin-top: 0.6rem;
+  overflow-wrap: anywhere;
+}
+
+.receipt-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  color: #a1132f;
+}
+
+.receipt-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid #d5dbe0;
+  font-size: 0.75rem;
+  color: #5b6670;
+}
+
+@media (max-width: 575.98px) {
+  .receipt-paper {
+    padding: 1.25rem 1rem;
+  }
+
+  .receipt-table th:nth-child(3),
+  .receipt-table td:nth-child(3) {
+    display: none; /* unit price: the amount and quantity are enough on a phone */
+  }
+}
+
+/* ---------- Printing (booking confirmation, receipt) ---------- */
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  .receipt-paper {
+    max-width: none;
+    padding: 0;
+    box-shadow: none;
+    color: #000;
+  }
+
+  .receipt-paper,
+  .receipt-table th {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-family: 'Chakra Petch', 'Tahoma', sans-serif;
+  }
+
+  .skip-link,
+  .cyber-header,
+  .cyber-banner,
+  .cyber-search,
+  .cyber-sidebar,
+  .cyber-sidebar-toggle,
+  .cyber-footer,
+  .cyber-steps,
+  .no-print,
+  .cyber-alert {
+    display: none !important;
+  }
+
+  main.col-lg-9 {
+    width: 100% !important;
+  }
+
+  .cyber-panel {
+    border: none;
+    box-shadow: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .cyber-panel::before {
+    content: none;
+  }
+
+  .cyber-section-title,
+  .cyber-summary .total dt,
+  .cyber-summary .total dd,
+  h2,
+  strong {
+    color: #000 !important;
+  }
+
+  .cyber-note,
+  .cyber-summary dt {
+    color: #333 !important;
+  }
+
+  .cyber-summary dd,
+  .text-light-print {
+    color: #000 !important;
+  }
+}

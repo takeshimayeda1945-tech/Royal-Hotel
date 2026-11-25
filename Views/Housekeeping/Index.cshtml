@@ -1,0 +1,195 @@
+@{
+    ViewData["Title"] = "งานแม่บ้าน";
+    var shifts = ViewBag.Shifts as List<HousekeepingShift> ?? new();
+    var openTasks = ViewBag.OpenTasks as List<HousekeepingTask> ?? new();
+    var doneToday = ViewBag.DoneToday as List<HousekeepingTask> ?? new();
+    var departures = ViewBag.Departures as List<HotelBooking> ?? new();
+    var rooms = ViewBag.Rooms as List<HotelRoom> ?? new();
+    var isHousekeeper = ViewBag.IsHousekeeper is true;
+    var currentUserId = ViewBag.CurrentUserId as int?;
+    var today = DateTime.Today;
+}
+
+<div class="cyber-section-title">Housekeeping</div>
+<h2 class="cyber-heading mb-3">ห้องที่ต้องทำความสะอาด</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-4"><div class="stat-tile"><span>รอทำความสะอาด</span><strong>@openTasks.Count(t => t.Status == HousekeepingTaskStatus.Pending)</strong></div></div>
+    <div class="col-4"><div class="stat-tile"><span>กำลังทำ</span><strong>@openTasks.Count(t => t.Status == HousekeepingTaskStatus.InProgress)</strong></div></div>
+    <div class="col-4"><div class="stat-tile"><span>เสร็จวันนี้</span><strong>@doneToday.Count</strong></div></div>
+</div>
+
+@* Open jobs: at most two cards per row, so the room name and both buttons always fit on one line. *@
+@if (!openTasks.Any())
+{
+    <div class="cyber-empty mb-4">ไม่มีห้องที่ต้องทำความสะอาดตอนนี้</div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        @foreach (var task in openTasks)
+        {
+            // A housekeeper can only finish a job that is free or their own; managers can finish any job.
+            var isMine = task.AssignedToUserId != null && task.AssignedToUserId == currentUserId;
+            var canComplete = !isHousekeeper || task.AssignedToUserId == null || isMine;
+            <div class="col-md-6">
+                <article class="cyber-room-card cyber-room-card--listing task-card @(isMine ? "task-card--mine" : null)">
+                    <div class="cyber-room-body">
+                        <span class="cyber-pill status-pill @HousekeepingTaskStatus.CssClass(task.Status)">@HousekeepingTaskStatus.ThaiName(task.Status)</span>
+                        <h3 class="cyber-room-name mt-2 mb-0">@task.RoomName</h3>
+                        <dl class="task-facts">
+                            <div><dt>แจ้งเมื่อ</dt><dd>@DisplayText.Timestamp(task.CreatedAt)</dd></div>
+                            @if (task.Note.Length > 0)
+                            {
+                                <div><dt>รายละเอียด</dt><dd>@task.Note</dd></div>
+                            }
+                            <div>
+                                <dt>ผู้รับงาน</dt>
+                                <dd>@(task.AssignedToName.Length > 0 ? task.AssignedToName + (isMine ? " (คุณ)" : "") : "ยังไม่มีผู้รับ")</dd>
+                            </div>
+                        </dl>
+                        <div class="d-flex gap-2 pt-3 cyber-room-actions task-actions">
+                            @if (task.Status == HousekeepingTaskStatus.Pending)
+                            {
+                                <form asp-action="Start" method="post" class="flex-fill"><input type="hidden" name="id" value="@task.Id" /><button type="submit" class="cyber-btn-outline w-100">รับงาน</button></form>
+                            }
+                            @if (canComplete)
+                            {
+                                <form asp-action="Complete" method="post" class="flex-fill"><input type="hidden" name="id" value="@task.Id" /><button type="submit" class="cyber-btn w-100">ทำเสร็จแล้ว</button></form>
+                            }
+                            else
+                            {
+                                <div class="cyber-note mt-0">มีผู้รับงานนี้แล้ว</div>
+                            }
+                        </div>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+}
+
+@* Same one-line form as on the front-desk page. *@
+<div class="cyber-booking-box mb-4">
+    <div class="cyber-section-title mb-2">แจ้งทำความสะอาดเพิ่ม (เช่น แขกขอเปลี่ยนผ้าปู)</div>
+    <form asp-action="AddTask" method="post" class="row g-2 align-items-center">
+        <div class="col-md-4">
+            <select name="roomId" class="form-select" aria-label="ห้อง" required>
+                <option value="">เลือกห้อง</option>
+                @foreach (var room in rooms)
+                {
+                    <option value="@room.Id">@room.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-5">
+            <input name="note" class="form-control" maxlength="200" placeholder="หมายเหตุ" aria-label="หมายเหตุ" />
+        </div>
+        <div class="col-md-3 d-grid">
+            <button type="submit" class="cyber-btn-outline">เพิ่มงาน</button>
+        </div>
+    </form>
+</div>
+
+@* Each list gets the full width (placed side by side, room and guest names wrapped onto several lines). *@
+<div class="row g-4">
+    <section class="col-12">
+        <div class="cyber-section-title">ห้องที่แขกถึงกำหนดเช็คเอาท์ (@departures.Count)</div>
+        @if (!departures.Any())
+        {
+            <div class="cyber-empty">ไม่มีแขกที่ต้องเช็คเอาท์วันนี้</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-dark align-middle cyber-table mb-0">
+                    <thead><tr><th>ห้อง</th><th>แขก</th><th>กำหนดเช็คเอาท์</th></tr></thead>
+                    <tbody>
+                        @foreach (var b in departures)
+                        {
+                            <tr>
+                                <td>@b.RoomName</td>
+                                <td>
+                                    @b.GuestName
+                                    <div class="cyber-note mt-0">@b.Guests คน@(b.ExtraBed ? " · มีเตียงเสริม" : "")</div>
+                                </td>
+                                <td class="text-nowrap">
+                                    @DisplayText.Date(b.CheckOut)
+                                    @if (b.CheckOut.Date < today)
+                                    {
+                                        <span class="cyber-pill status-pill status-warning ms-1">เกินกำหนด</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="col-12">
+        <div class="cyber-section-title">ทำเสร็จวันนี้ (@doneToday.Count)</div>
+        @if (!doneToday.Any())
+        {
+            <div class="cyber-empty">ยังไม่มีงานที่เสร็จวันนี้</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-dark align-middle cyber-table mb-0">
+                    <thead><tr><th>ห้อง</th><th>ผู้ทำ</th><th>เสร็จเมื่อ</th></tr></thead>
+                    <tbody>
+                        @foreach (var task in doneToday)
+                        {
+                            <tr>
+                                <td>@task.RoomName</td>
+                                <td>@(task.AssignedToName.Length > 0 ? task.AssignedToName : "-")</td>
+                                <td class="text-nowrap">@task.CompletedAt?.ToString("HH:mm", CultureInfo.InvariantCulture) น.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    @* Managers see every housekeeper: a wide table scrolls inside its box instead of covering the page. *@
+    <section class="col-12">
+        <div class="cyber-section-title">@(isHousekeeper ? "เวรของฉัน (7 วัน)" : "ตารางเวรแม่บ้าน (7 วัน)")</div>
+        @if (!shifts.Any())
+        {
+            <div class="cyber-empty">ยังไม่มีเวรใน 7 วันข้างหน้า</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-dark align-middle cyber-table mb-0">
+                    <thead><tr><th>วันที่</th>@if (!isHousekeeper){<th>แม่บ้าน</th>}<th>ช่วงเวร</th><th>หมายเหตุ</th></tr></thead>
+                    <tbody>
+                        @foreach (var day in shifts.GroupBy(s => s.Date.Date))
+                        {
+                            var firstOfDay = true;
+                            foreach (var shift in day)
+                            {
+                                <tr class="@(day.Key == today ? "table-active" : null)">
+                                    @if (firstOfDay)
+                                    {
+                                        <td class="text-nowrap" rowspan="@day.Count()">@day.Key.ToString("ddd dd/MM", CultureInfo.InvariantCulture)@(day.Key == today ? " (วันนี้)" : "")</td>
+                                        firstOfDay = false;
+                                    }
+                                    @if (!isHousekeeper)
+                                    {
+                                        <td>@shift.UserName</td>
+                                    }
+                                    <td class="text-nowrap">@shift.ShiftName</td>
+                                    <td>@shift.Note</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
